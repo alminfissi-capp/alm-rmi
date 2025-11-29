@@ -47,19 +47,13 @@ const navigation = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="justify-center">
-              <a href="/dashboard" className="flex items-center justify-center">
-                <Logo
-                  className="w-12 h-12 rounded-lg"
-                  aria-label="A.L.M. Infissi Logo"
-                />
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="p-4">
+        <a href="/dashboard" className="flex items-center">
+          <Logo
+            className="w-20 h-20 rounded-lg"
+            aria-label="A.L.M. Infissi Logo"
+          />
+        </a>
       </SidebarHeader>
 
       <SidebarContent>
