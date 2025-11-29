@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useFormStatus } from 'react-dom'
 import { signup } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
@@ -12,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { ModeToggle } from '@/components/mode-toggle'
+import Logo from '@/public/alm.svg'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -59,13 +59,9 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <Image
-              src="/icon.ico"
-              alt="A.L.M. Infissi Logo"
-              width={64}
-              height={64}
-              className="rounded-2xl"
-              priority
+            <Logo
+              className="w-16 h-16 rounded-2xl"
+              aria-label="A.L.M. Infissi Logo"
             />
           </div>
           <div>

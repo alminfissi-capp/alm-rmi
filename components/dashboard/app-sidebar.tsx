@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import {
   FileText,
   LayoutDashboard,
@@ -9,6 +8,7 @@ import {
   LogOut,
   User,
 } from "lucide-react"
+import Logo from "@/public/alm.svg"
 
 import {
   Sidebar,
@@ -52,12 +52,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="/dashboard">
-                <Image
-                  src="/icon.ico"
-                  alt="A.L.M. Infissi Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-lg"
+                <Logo
+                  className="w-8 h-8 rounded-lg"
+                  aria-label="A.L.M. Infissi Logo"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">RMI</span>
