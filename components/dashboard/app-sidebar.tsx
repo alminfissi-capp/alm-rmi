@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import {
   FileText,
   LayoutDashboard,
@@ -51,9 +52,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <FileText className="size-4" />
-                </div>
+                <Image
+                  src="/icon.ico"
+                  alt="A.L.M. Infissi Logo"
+                  width={32}
+                  height={32}
+                  className="rounded-lg"
+                />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">RMI</span>
                   <span className="truncate text-xs">A.L.M. Infissi</span>

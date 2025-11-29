@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useFormStatus } from 'react-dom'
 import { signup } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { FileText, Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { ModeToggle } from '@/components/mode-toggle'
 
 function SubmitButton() {
@@ -58,9 +59,14 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-              <FileText className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <Image
+              src="/icon.ico"
+              alt="A.L.M. Infissi Logo"
+              width={64}
+              height={64}
+              className="rounded-2xl"
+              priority
+            />
           </div>
           <div>
             <CardTitle className="text-2xl">Crea un account</CardTitle>
