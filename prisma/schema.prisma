@@ -1,0 +1,157 @@
+// ============================================
+// Prisma Schema for RMI Project
+// Rilevatore Misure Interattivo - A.L.M. Infissi
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// TABELLA RILIEVI (Progetti/Commesse)
+// ============================================
+model Rilievo {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+
+  // Dati progetto/commessa
+  cliente     String?
+  data        DateTime? @db.Date
+  indirizzo   String?
+  celltel     String?
+  email       String?
+  note_header String?
+  commessa    String?
+
+  // Metadata
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Status workflow
+  status     String   @default("bozza")
+
+  // Relations
+  serramenti Serramento[]
+  pdf        PDFGenerated[]
+
+  @@index([user_id])
+  @@index([created_at(sort: Desc)])
+  @@index([status])
+  @@index([cliente])
+  @@index([commessa])
+  @@map("rilievi")
+}
+
+// ============================================
+// TABELLA SERRAMENTI (Pagine P1, P2, P3...)
+// ============================================
+model Serramento {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rilievo_id  String   @db.Uuid
+  page_number Int
+
+  // DATI TIPOLOGIA
+  n_pezzi     Int?
+  tipologia   String?
+  serie       String?
+  nome        String?
+  larghezza   Decimal? @db.Decimal(10, 2)
+  altezza     Decimal? @db.Decimal(10, 2)
+  descrizione String?
+  note        String?
+
+  // MISURE SPECIALI ALETTE
+  alette_dx    Decimal? @db.Decimal(10, 2)
+  alette_testa Decimal? @db.Decimal(10, 2)
+  alette_sx    Decimal? @db.Decimal(10, 2)
+  alette_base  Decimal? @db.Decimal(10, 2)
+
+  // COLORI
+  colore_interno   String?
+  colore_esterno   String?
+  colore_accessori String?
+  c_interno_anta   String?
+  c_esterno_anta   String?
+
+  // FERRAMENTA
+  quantita_anta_ribalta Int?
+  tipologia_cerniere    String?
+  serrature             String?
+  cilindro              String?
+
+  // OPZIONI
+  linea_estetica_telai String?
+  tipo_anta            String?
+  linea_estetica_ante  String?
+  riporto_centrale     String?
+
+  // APERTURA
+  lato_apertura      String?
+  altezza_maniglia   Decimal? @db.Decimal(10, 2)
+  tipologia_maniglia String?
+
+  // ALETTE & APERTURE
+  alette_aperture String?
+
+  // TRAVERSO/MONTANTE
+  tipo_profilo        String?
+  riferimento_misure  String?
+  misura_traverso     Decimal? @db.Decimal(10, 2)
+
+  // ZANZARIERE
+  zanzariere_tipologia String?  @default("RULLO CASSONETTO 42")
+  zanzariere_colore    String?
+  zanzariere_chiusura  String?
+  zanzariere_x         Decimal? @db.Decimal(10, 2)
+  zanzariere_h         Decimal? @db.Decimal(10, 2)
+
+  // RIEMPIMENTI
+  vetri    String?
+  pannelli String?
+
+  // ZOCCOLO & FASCIA
+  zoccolo    String?
+  fascia_h   Decimal? @db.Decimal(10, 2)
+  fascia_tipo String?
+
+  // OSCURANTI
+  oscuranti_tipo String?
+  oscuranti_l    Decimal? @db.Decimal(10, 2)
+  oscuranti_h    Decimal? @db.Decimal(10, 2)
+
+  // Metadata
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  rilievo Rilievo @relation(fields: [rilievo_id], references: [id], onDelete: Cascade)
+
+  @@index([rilievo_id])
+  @@index([page_number])
+  @@map("serramenti")
+}
+
+// ============================================
+// TABELLA PDF_GENERATED
+// ============================================
+model PDFGenerated {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rilievo_id   String   @db.Uuid
+  file_path    String
+  file_name    String
+  file_size    Int?
+  generated_at DateTime @default(now()) @db.Timestamptz(6)
+  generated_by String?  @db.Uuid
+
+  // Relations
+  rilievo Rilievo @relation(fields: [rilievo_id], references: [id], onDelete: Cascade)
+
+  @@index([rilievo_id])
+  @@map("pdf_generated")
+}
