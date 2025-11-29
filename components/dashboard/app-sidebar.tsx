@@ -50,16 +50,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="/dashboard">
+            <SidebarMenuButton size="lg" asChild className="justify-center">
+              <a href="/dashboard" className="flex items-center justify-center">
                 <Logo
-                  className="w-8 h-8 rounded-lg"
+                  className="w-12 h-12 rounded-lg"
                   aria-label="A.L.M. Infissi Logo"
                 />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">RMI</span>
-                  <span className="truncate text-xs">A.L.M. Infissi</span>
-                </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
