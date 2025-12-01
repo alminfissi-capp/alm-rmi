@@ -171,28 +171,48 @@ export function RMIForm({ rilievo, onUpdate, readOnly = false }: RMIFormProps) {
     // Delete serramento from database if it exists
     const serramentoId = serramentoIds[page]
     if (serramentoId) {
-      try {
-        await fetch(`/api/serramenti/${serramentoId}`, {
-          method: "DELETE",
-        })
-        toast.success(`Serramento ${page} eliminato con successo`)
-      } catch (error) {
-        console.error("Error deleting serramento:", error)
-        toast.error("Errore durante l'eliminazione del serramento")
-        return
+      const deletePromise = fetch(`/api/serramenti/${serramentoId}`, {
+        method: "DELETE",
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error("Errore durante l'eliminazione")
+        }
+        return response
+      })
+
+      toast.promise(deletePromise, {
+        loading: `Eliminazione ${page}...`,
+        success: () => {
+          // Update local state after successful deletion
+          setPages(newPages)
+          const newSerramenti = { ...serramenti }
+          delete newSerramenti[page]
+          setSerramenti(newSerramenti)
+
+          // Switch to another page
+          if (currentPage === page) {
+            const newIndex = Math.max(0, pageIndex - 1)
+            setCurrentPage(newPages[newIndex])
+          }
+
+          return `Serramento ${page} eliminato con successo`
+        },
+        error: (err) => {
+          console.error("Error deleting serramento:", err)
+          return "Errore durante l'eliminazione del serramento"
+        },
+      })
+    } else {
+      // No serramento in DB, just update local state
+      setPages(newPages)
+      const newSerramenti = { ...serramenti }
+      delete newSerramenti[page]
+      setSerramenti(newSerramenti)
+
+      if (currentPage === page) {
+        const newIndex = Math.max(0, pageIndex - 1)
+        setCurrentPage(newPages[newIndex])
       }
-    }
-
-    // Update local state
-    setPages(newPages)
-    const newSerramenti = { ...serramenti }
-    delete newSerramenti[page]
-    setSerramenti(newSerramenti)
-
-    // Switch to another page
-    if (currentPage === page) {
-      const newIndex = Math.max(0, pageIndex - 1)
-      setCurrentPage(newPages[newIndex])
     }
   }, [pages, serramenti, currentPage, serramentoIds])
 

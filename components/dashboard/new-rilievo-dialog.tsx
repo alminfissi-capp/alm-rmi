@@ -75,35 +75,38 @@ export function NewRilievoDialog({
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
-    try {
-      const response = await fetch("/api/rilievi", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
 
-      if (response.ok) {
-        const result = await response.json()
-        toast.success("Rilievo creato con successo")
+    const createPromise = fetch("/api/rilievi", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    }).then(async (response) => {
+      if (!response.ok) {
+        throw new Error("Errore durante la creazione del rilievo")
+      }
+      return response.json()
+    })
+
+    toast.promise(createPromise, {
+      loading: "Creazione rilievo in corso...",
+      success: (result) => {
         form.reset()
         onRilievoCreated?.()
+        setLoading(false)
         // Redirect to rilievo edit page
         if (result.rilievo?.id) {
-          router.push(`/rilievo/${result.rilievo.id}`)
+          setTimeout(() => router.push(`/rilievo/${result.rilievo.id}`), 500)
         }
-      } else {
-        const error = await response.json()
-        console.error("Error creating rilievo:", error)
-        toast.error("Errore durante la creazione del rilievo")
-      }
-    } catch (error) {
-      console.error("Error creating rilievo:", error)
-      toast.error("Errore durante la creazione del rilievo")
-    } finally {
-      setLoading(false)
-    }
+        return "Rilievo creato con successo!"
+      },
+      error: (err) => {
+        setLoading(false)
+        console.error("Error creating rilievo:", err)
+        return "Errore durante la creazione del rilievo"
+      },
+    })
   }
 
   return (

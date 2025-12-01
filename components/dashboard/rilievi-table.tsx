@@ -77,24 +77,31 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
     if (!deleteId) return
 
     setDeleting(true)
-    try {
-      const response = await fetch(`/api/rilievi/${deleteId}`, {
-        method: "DELETE",
-      })
 
-      if (response.ok) {
-        toast.success("Rilievo eliminato con successo")
-        onRefresh()
-      } else {
-        toast.error("Errore durante l'eliminazione del rilievo")
+    const deletePromise = fetch(`/api/rilievi/${deleteId}`, {
+      method: "DELETE",
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error("Errore durante l'eliminazione")
       }
-    } catch (error) {
-      console.error("Error deleting rilievo:", error)
-      toast.error("Errore durante l'eliminazione del rilievo")
-    } finally {
-      setDeleting(false)
-      setDeleteId(null)
-    }
+      return response
+    })
+
+    toast.promise(deletePromise, {
+      loading: "Eliminazione in corso...",
+      success: () => {
+        setDeleting(false)
+        setDeleteId(null)
+        onRefresh()
+        return "Rilievo eliminato con successo"
+      },
+      error: (err) => {
+        console.error("Error deleting rilievo:", err)
+        setDeleting(false)
+        setDeleteId(null)
+        return "Errore durante l'eliminazione del rilievo"
+      },
+    })
   }
 
   if (loading) {
