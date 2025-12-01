@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { it } from "date-fns/locale"
@@ -85,6 +86,7 @@ export function NewRilievoDialog({
 
       if (response.ok) {
         const result = await response.json()
+        toast.success("Rilievo creato con successo")
         form.reset()
         onRilievoCreated?.()
         // Redirect to rilievo edit page
@@ -94,9 +96,11 @@ export function NewRilievoDialog({
       } else {
         const error = await response.json()
         console.error("Error creating rilievo:", error)
+        toast.error("Errore durante la creazione del rilievo")
       }
     } catch (error) {
       console.error("Error creating rilievo:", error)
+      toast.error("Errore durante la creazione del rilievo")
     } finally {
       setLoading(false)
     }

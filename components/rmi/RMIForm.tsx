@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import { PageManager } from "./PageManager"
 import { HeaderSection } from "./HeaderSection"
 import { DatiTipologiaSection } from "./DatiTipologiaSection"
@@ -35,6 +36,7 @@ interface RMIFormProps {
 
 export function RMIForm({ rilievo, onUpdate, readOnly = false }: RMIFormProps) {
   const [saving, setSaving] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   // Header form data
   const [headerData, setHeaderData] = useState<RilievoFormData>(EMPTY_RILIEVO_FORM)
@@ -173,8 +175,11 @@ export function RMIForm({ rilievo, onUpdate, readOnly = false }: RMIFormProps) {
         await fetch(`/api/serramenti/${serramentoId}`, {
           method: "DELETE",
         })
+        toast.success(`Serramento ${page} eliminato con successo`)
       } catch (error) {
         console.error("Error deleting serramento:", error)
+        toast.error("Errore durante l'eliminazione del serramento")
+        return
       }
     }
 
@@ -292,10 +297,11 @@ export function RMIForm({ rilievo, onUpdate, readOnly = false }: RMIFormProps) {
         }
       }
 
+      setLastSaved(new Date())
       onUpdate?.()
     } catch (error) {
       console.error("Error saving:", error)
-      // TODO: Show error toast
+      toast.error("Errore durante il salvataggio")
     } finally {
       setSaving(false)
     }
@@ -304,10 +310,20 @@ export function RMIForm({ rilievo, onUpdate, readOnly = false }: RMIFormProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Save indicator */}
-      {saving && (
+      {saving && !readOnly && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-background border rounded-md px-3 py-2 shadow-lg">
           <Loader2 className="h-4 w-4 animate-spin text-alm-blue" />
           <span className="text-sm text-muted-foreground">Salvataggio...</span>
+        </div>
+      )}
+
+      {/* Last saved indicator */}
+      {!saving && lastSaved && !readOnly && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2 shadow-lg">
+          <div className="h-2 w-2 rounded-full bg-green-500"></div>
+          <span className="text-sm text-green-700 dark:text-green-400">
+            Salvato alle {lastSaved.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+          </span>
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { it } from "date-fns/locale"
+import { toast } from "sonner"
 import {
   MoreHorizontal,
   Eye,
@@ -82,10 +83,14 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
       })
 
       if (response.ok) {
+        toast.success("Rilievo eliminato con successo")
         onRefresh()
+      } else {
+        toast.error("Errore durante l'eliminazione del rilievo")
       }
     } catch (error) {
       console.error("Error deleting rilievo:", error)
+      toast.error("Errore durante l'eliminazione del rilievo")
     } finally {
       setDeleting(false)
       setDeleteId(null)
