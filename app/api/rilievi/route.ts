@@ -3,48 +3,42 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { createClient } from '@/lib/supabase/server';
+import { getDashboardRilievi, createRilievo } from '@/lib/supabase/queries';
 
 // GET /api/rilievi - List all rilievi with filters
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient();
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status');
     const search = searchParams.get('search');
-    const sortBy = searchParams.get('sortBy') || 'created_at';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
-    // Build where clause
-    const where: any = {};
+    // Build filters
+    const filters: any = {};
 
     if (status && status !== 'all') {
-      where.status = status;
+      filters.status = status;
     }
 
     if (search) {
-      where.OR = [
-        { cliente: { contains: search, mode: 'insensitive' } },
-        { commessa: { contains: search, mode: 'insensitive' } },
-        { indirizzo: { contains: search, mode: 'insensitive' } },
-      ];
+      filters.search = search;
     }
 
-    // Fetch rilievi with serramenti count
-    const rilievi = await prisma.rilievo.findMany({
-      where,
-      include: {
-        _count: {
-          select: { serramenti: true },
-        },
-      },
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
-    });
+    // Fetch rilievi using query helper
+    const { rilievi, total } = await getDashboardRilievi(supabase, filters);
 
-    return NextResponse.json({ rilievi }, { status: 200 });
+    return NextResponse.json({ rilievi, total }, { status: 200 });
   } catch (error) {
     console.error('Error fetching rilievi:', error);
     return NextResponse.json(
@@ -57,6 +51,17 @@ export async function GET(request: NextRequest) {
 // POST /api/rilievi - Create new rilievo
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const {
       cliente,
@@ -68,22 +73,15 @@ export async function POST(request: NextRequest) {
       commessa,
     } = body;
 
-    // TODO: Get user_id from session when auth is implemented
-    const user_id = '00000000-0000-0000-0000-000000000000'; // Temporary placeholder
-
-    // Create new rilievo
-    const rilievo = await prisma.rilievo.create({
-      data: {
-        user_id,
-        cliente: cliente || null,
-        data: data ? new Date(data) : null,
-        indirizzo: indirizzo || null,
-        celltel: celltel || null,
-        email: email || null,
-        note_header: note_header || null,
-        commessa: commessa || null,
-        status: 'bozza',
-      },
+    // Create new rilievo using query helper
+    const rilievo = await createRilievo(supabase, {
+      cliente: cliente || null,
+      data: data || null,
+      indirizzo: indirizzo || null,
+      celltel: celltel || null,
+      email: email || null,
+      note_header: note_header || null,
+      commessa: commessa || null,
     });
 
     return NextResponse.json({ rilievo }, { status: 201 });

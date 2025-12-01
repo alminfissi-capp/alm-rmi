@@ -102,7 +102,8 @@ export default function LoginPage() {
             </Link>
           </div>
           <div className="text-xs text-center text-muted-foreground">
-            A.L.M. Infissi © 2025
+            A.L.M. Infissi © 2025<br />
+            Partita IVA: 06365120820
           </div>
         </CardFooter>
       </Card>

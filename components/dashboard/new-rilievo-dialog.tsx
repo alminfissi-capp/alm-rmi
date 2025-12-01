@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
@@ -57,6 +58,7 @@ export function NewRilievoDialog({
   onOpenChange,
   onRilievoCreated,
 }: NewRilievoDialogProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const form = useForm<FormData>({
     defaultValues: {
@@ -82,8 +84,13 @@ export function NewRilievoDialog({
       })
 
       if (response.ok) {
+        const result = await response.json()
         form.reset()
         onRilievoCreated?.()
+        // Redirect to rilievo edit page
+        if (result.rilievo?.id) {
+          router.push(`/rilievo/${result.rilievo.id}`)
+        }
       } else {
         const error = await response.json()
         console.error("Error creating rilievo:", error)

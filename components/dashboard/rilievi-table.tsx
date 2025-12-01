@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { it } from "date-fns/locale"
 import {
@@ -50,9 +51,7 @@ interface Rilievo {
   commessa: string | null
   status: string
   created_at: string
-  _count: {
-    serramenti: number
-  }
+  num_serramenti: number
 }
 
 interface RilieviTableProps {
@@ -69,6 +68,7 @@ const statusConfig = {
 }
 
 export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps) {
+  const router = useRouter()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -174,7 +174,7 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {rilievo._count.serramenti}
+                      {rilievo.num_serramenti}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -188,19 +188,19 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Azioni</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/rilievo/${rilievo.id}?mode=view`)}>
                           <Eye className="mr-2 h-4 w-4" />
                           Visualizza
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/rilievo/${rilievo.id}`)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Modifica
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem disabled>
                           <FileText className="mr-2 h-4 w-4" />
                           Genera PDF
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem disabled>
                           <Mail className="mr-2 h-4 w-4" />
                           Invia Email
                         </DropdownMenuItem>
