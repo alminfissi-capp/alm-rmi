@@ -45,15 +45,6 @@ export function DashboardClient() {
     fetchRilievi()
   }, [search, statusFilter])
 
-  // Auto-refresh every 30 seconds for real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchRilievi()
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [search, statusFilter])
-
   const handleRilievoCreated = () => {
     setIsDialogOpen(false)
     fetchRilievi()
