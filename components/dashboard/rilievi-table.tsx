@@ -53,6 +53,7 @@ interface Rilievo {
   status: string
   created_at: string
   num_serramenti: number
+  creator_email?: string | null
 }
 
 interface RilieviTableProps {
@@ -72,6 +73,7 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
   const router = useRouter()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null)
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -104,6 +106,41 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
     })
   }
 
+  const handleGeneratePDF = async (rilievoId: string) => {
+    setGeneratingPdfId(rilievoId)
+
+    const generatePromise = fetch("/api/pdf/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rilievoId }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Errore durante la generazione del PDF")
+      }
+      return response.json()
+    })
+
+    toast.promise(generatePromise, {
+      loading: "Generazione PDF in corso...",
+      success: (data) => {
+        setGeneratingPdfId(null)
+
+        // Download the PDF
+        if (data.pdf?.downloadUrl) {
+          window.open(data.pdf.downloadUrl, "_blank")
+        }
+
+        return "PDF generato con successo!"
+      },
+      error: (err) => {
+        console.error("Error generating PDF:", err)
+        setGeneratingPdfId(null)
+        return err.message || "Errore durante la generazione del PDF"
+      },
+    })
+  }
+
   if (loading) {
     return (
       <div className="rounded-md border">
@@ -115,6 +152,7 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
               <TableHead>Data</TableHead>
               <TableHead>Stato</TableHead>
               <TableHead>Serramenti</TableHead>
+              <TableHead>Creato da</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -126,6 +164,7 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-8" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-8 w-8" /></TableCell>
               </TableRow>
             ))}
@@ -158,6 +197,7 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
               <TableHead>Data</TableHead>
               <TableHead>Stato</TableHead>
               <TableHead>Serramenti</TableHead>
+              <TableHead>Creato da</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -190,6 +230,11 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                     </span>
                   </TableCell>
                   <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {rilievo.creator_email || <span className="text-muted-foreground italic">N/A</span>}
+                    </span>
+                  </TableCell>
+                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -208,9 +253,12 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                           <Edit className="mr-2 h-4 w-4" />
                           Modifica
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled>
+                        <DropdownMenuItem
+                          onClick={() => handleGeneratePDF(rilievo.id)}
+                          disabled={generatingPdfId === rilievo.id}
+                        >
                           <FileText className="mr-2 h-4 w-4" />
-                          Genera PDF
+                          {generatingPdfId === rilievo.id ? "Generando..." : "Genera PDF"}
                         </DropdownMenuItem>
                         <DropdownMenuItem disabled>
                           <Mail className="mr-2 h-4 w-4" />
