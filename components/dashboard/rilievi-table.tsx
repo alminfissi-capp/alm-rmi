@@ -12,6 +12,7 @@ import {
   Trash2,
   FileText,
   Mail,
+  ChevronDown,
 } from "lucide-react"
 
 import {
@@ -63,17 +64,41 @@ interface RilieviTableProps {
 }
 
 const statusConfig = {
-  bozza: { label: "Bozza", variant: "secondary" as const },
-  in_lavorazione: { label: "In lavorazione", variant: "default" as const },
-  completato: { label: "Completato", variant: "default" as const },
-  archiviato: { label: "Archiviato", variant: "outline" as const },
+  bozza: {
+    label: "Bozza",
+    variant: "secondary" as const,
+    className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+  },
+  in_lavorazione: {
+    label: "In lavorazione",
+    variant: "default" as const,
+    className: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+  },
+  completato: {
+    label: "Completato",
+    variant: "default" as const,
+    className: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+  },
+  archiviato: {
+    label: "Archiviato",
+    variant: "outline" as const,
+    className: "bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+  },
 }
+
+const statusOptions = [
+  { value: "bozza", label: "Bozza" },
+  { value: "in_lavorazione", label: "In lavorazione" },
+  { value: "completato", label: "Completato" },
+  { value: "archiviato", label: "Archiviato" },
+]
 
 export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps) {
   const router = useRouter()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null)
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -137,6 +162,37 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
         console.error("Error generating PDF:", err)
         setGeneratingPdfId(null)
         return err.message || "Errore durante la generazione del PDF"
+      },
+    })
+  }
+
+  const handleStatusChange = async (rilievoId: string, newStatus: string) => {
+    setUpdatingStatusId(rilievoId)
+
+    const updatePromise = fetch(`/api/rilievi/${rilievoId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Errore durante l'aggiornamento dello stato")
+      }
+      return response.json()
+    })
+
+    toast.promise(updatePromise, {
+      loading: "Aggiornamento stato...",
+      success: () => {
+        setUpdatingStatusId(null)
+        onRefresh()
+        const statusLabel = statusOptions.find(s => s.value === newStatus)?.label || newStatus
+        return `Stato aggiornato a "${statusLabel}"`
+      },
+      error: (err) => {
+        console.error("Error updating status:", err)
+        setUpdatingStatusId(null)
+        return err.message || "Errore durante l'aggiornamento dello stato"
       },
     })
   }
@@ -220,9 +276,37 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                     }
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusInfo.variant}>
-                      {statusInfo.label}
-                    </Badge>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild disabled={updatingStatusId === rilievo.id}>
+                        <Button
+                          variant="ghost"
+                          className="h-auto p-0 hover:bg-transparent"
+                          disabled={updatingStatusId === rilievo.id}
+                        >
+                          <Badge
+                            variant={statusInfo.variant}
+                            className={`cursor-pointer hover:opacity-80 ${statusInfo.className}`}
+                          >
+                            {statusInfo.label}
+                            <ChevronDown className="ml-1 h-3 w-3" />
+                          </Badge>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuLabel>Cambia stato</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {statusOptions.map((option) => (
+                          <DropdownMenuItem
+                            key={option.value}
+                            onClick={() => handleStatusChange(rilievo.id, option.value)}
+                            disabled={option.value === rilievo.status}
+                          >
+                            {option.label}
+                            {option.value === rilievo.status && " (corrente)"}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
