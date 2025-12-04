@@ -34,7 +34,7 @@ const navigation = [
   },
   {
     title: "Rilievi",
-    url: "/dashboard",
+    url: "/rilievi",
     icon: FileText,
   },
   {

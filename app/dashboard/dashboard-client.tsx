@@ -1,53 +1,61 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Filter } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { RilieviTable } from "@/components/dashboard/rilievi-table"
+import { StatsCards } from "@/components/dashboard/stats-cards"
+import { ActivityChart } from "@/components/dashboard/activity-chart"
+import { StatusDistribution } from "@/components/dashboard/status-distribution"
+import { RecentRilievi } from "@/components/dashboard/recent-rilievi"
 import { NewRilievoDialog } from "@/components/dashboard/new-rilievo-dialog"
 
+interface DashboardStats {
+  totalRilievi: number
+  rilieviThisMonth: number
+  monthlyChange: number
+  totalSerramenti: number
+  statusCounts: Record<string, number>
+  monthlyData: Record<string, number>
+}
+
 export function DashboardClient() {
-  const [rilievi, setRilievi] = useState([])
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [recentRilievi, setRecentRilievi] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const fetchRilievi = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (search) params.append("search", search)
-      if (statusFilter !== "all") params.append("status", statusFilter)
+      // Fetch stats
+      const statsResponse = await fetch("/api/dashboard/stats")
+      const statsData = await statsResponse.json()
 
-      const response = await fetch(`/api/rilievi?${params.toString()}`)
-      const data = await response.json()
+      if (statsResponse.ok) {
+        setStats(statsData)
+      }
 
-      if (response.ok) {
-        setRilievi(data.rilievi)
+      // Fetch recent rilievi (last 5)
+      const rilieviResponse = await fetch("/api/rilievi?limit=5&sort=updated_at&order=desc")
+      const rilieviData = await rilieviResponse.json()
+
+      if (rilieviResponse.ok) {
+        setRecentRilievi(rilieviData.rilievi)
       }
     } catch (error) {
-      console.error("Error fetching rilievi:", error)
+      console.error("Error fetching dashboard data:", error)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchRilievi()
-  }, [search, statusFilter])
+    fetchDashboardData()
+  }, [])
 
   const handleRilievoCreated = () => {
     setIsDialogOpen(false)
-    fetchRilievi()
+    fetchDashboardData()
   }
 
   return (
@@ -55,9 +63,9 @@ export function DashboardClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Rilievi</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground">
-            Gestisci i tuoi progetti e commesse
+            Panoramica dei tuoi rilievi e attività
           </p>
         </div>
         <NewRilievoDialog
@@ -72,38 +80,17 @@ export function DashboardClient() {
         </NewRilievoDialog>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cerca per cliente, commessa o indirizzo..."
-            className="pl-8"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Stato" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tutti gli stati</SelectItem>
-            <SelectItem value="bozza">Bozza</SelectItem>
-            <SelectItem value="in_lavorazione">In lavorazione</SelectItem>
-            <SelectItem value="completato">Completato</SelectItem>
-            <SelectItem value="archiviato">Archiviato</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Stats Cards */}
+      <StatsCards stats={stats || { totalRilievi: 0, rilieviThisMonth: 0, monthlyChange: 0, totalSerramenti: 0, statusCounts: {} }} loading={loading} />
+
+      {/* Charts Row */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <ActivityChart monthlyData={stats?.monthlyData || {}} loading={loading} />
+        <StatusDistribution statusCounts={stats?.statusCounts || {}} loading={loading} />
       </div>
 
-      {/* Table */}
-      <RilieviTable
-        rilievi={rilievi}
-        loading={loading}
-        onRefresh={fetchRilievi}
-      />
+      {/* Recent Rilievi */}
+      <RecentRilievi rilievi={recentRilievi} loading={loading} />
     </div>
   )
 }

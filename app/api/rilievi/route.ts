@@ -28,6 +28,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status');
     const search = searchParams.get('search');
+    const limit = searchParams.get('limit');
+    const sort = searchParams.get('sort') || 'created_at';
+    const order = searchParams.get('order') || 'desc';
 
     // Build filters
     const filters: any = {};
@@ -60,6 +63,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Build ORDER BY clause
+    const validSortFields = ['created_at', 'updated_at', 'cliente', 'commessa', 'status'];
+    const sortField = validSortFields.includes(sort) ? sort : 'created_at';
+    const sortOrder = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    // Build LIMIT clause
+    const limitClause = limit ? `LIMIT ${parseInt(limit)}` : '';
+
     // Fetch rilievi with creator email using raw SQL
     const query = `
       SELECT
@@ -69,7 +80,8 @@ export async function GET(request: NextRequest) {
       FROM rilievi r
       LEFT JOIN auth.users u ON r.user_id = u.id
       ${whereClause}
-      ORDER BY r.created_at DESC
+      ORDER BY r.${sortField} ${sortOrder}
+      ${limitClause}
     `;
 
     const rilieviWithCreator = params.length > 0
