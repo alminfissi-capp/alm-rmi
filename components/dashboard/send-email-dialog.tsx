@@ -74,7 +74,7 @@ export function SendEmailDialog({
     })
 
     toast.promise(sendPromise, {
-      loading: "Invio email in corso...",
+      loading: "Preparazione e invio email in corso...",
       success: () => {
         setIsSending(false)
         onOpenChange(false)
