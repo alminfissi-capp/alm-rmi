@@ -4,8 +4,8 @@
 
 ## 📊 Stato Progetto
 
-**Completamento generale**: 90%
-**Versione corrente**: 1.0.0-beta
+**Completamento generale**: 95%
+**Versione corrente**: 1.0.0-rc1
 **Stack**: Next.js 16.0.7, React 19.2.0, TypeScript 5, Prisma 6.19.0, Supabase
 
 ---
@@ -84,6 +84,9 @@
 - [x] Resend verification con cooldown 60s
 - [x] API `/api/send` per test invio email
 - [x] API `/api/auth/resend-verification`
+- [x] **API `/api/pdf/send-email` per invio PDF via email** (2025-12-06)
+- [x] **Dialog SendEmailDialog per invio PDF** (2025-12-06)
+- [x] **Integrazione invio email nella tabella rilievi** (2025-12-06)
 
 ### UI/UX & Design System
 - [x] 28 componenti shadcn/ui (Button, Dialog, Table, Form, ecc.)
@@ -105,6 +108,44 @@
 - [x] Server components dove possibile
 - [x] Turbopack abilitato
 
+### Settings Page (2025-12-06)
+- [x] **Implementare pagina `/dashboard/settings` completa**
+- [x] **Sezione Profilo Utente**
+  - [x] Visualizzazione dati utente (email, nome, telefono)
+  - [x] Modifica informazioni profilo (nome completo, telefono)
+  - [x] API `/api/user/profile` (PATCH)
+- [x] **Sezione Sicurezza**
+  - [x] Cambio password con validazione
+  - [x] Verifica password corrente
+  - [x] API `/api/user/password` (PATCH)
+- [x] **Sezione Preferenze**
+  - [x] Lingua (IT/EN)
+  - [x] Formato data (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
+  - [x] Tema default (Light/Dark/System)
+  - [x] Notifiche email (toggle)
+  - [x] API `/api/user/preferences` (GET, PATCH)
+- [x] **Sezione Account**
+  - [x] Visualizzazione info account (data creazione, ultimo accesso)
+  - [x] Email verificata status
+  - [x] ID utente
+- [x] **Sistema Tabs** per navigazione tra sezioni
+- [x] **Loading states** per tutte le operazioni
+- [x] **Toast notifications** per feedback utente
+
+### Invio PDF via Email (2025-12-06)
+- [x] **Creare dialog "Invia PDF via Email"** (SendEmailDialog component)
+- [x] **Form con input email destinatario** (con validazione regex)
+- [x] **Campo nome destinatario** (opzionale, usato nel messaggio)
+- [x] **Campo oggetto email** (precompilato modificabile)
+- [x] **Campo messaggio/corpo email** (textarea personalizzabile)
+- [x] **Integrazione API `/api/pdf/send-email`** con allegato PDF
+- [x] **Download PDF da Supabase Storage** e conversione base64
+- [x] **Email HTML formattata** con dettagli rilievo
+- [x] **Conferma invio con toast notification**
+- [x] **UI bottone "Invia Email"** nella tabella rilievi (attivato)
+- [x] **Dialog stato loading** durante invio
+- [ ] Log invii email in database (tabella EmailLog) - Rimandato
+
 ---
 
 ## 🚧 IN PROGRESS
@@ -115,34 +156,7 @@ _Nessuna task attualmente in corso_
 
 ## 📋 TODO - PRIORITY ALTA
 
-### Settings Page
-- [ ] Implementare pagina `/dashboard/settings` completa
-- [ ] Sezione Profilo Utente
-  - [ ] Visualizzazione dati utente (email, nome)
-  - [ ] Modifica informazioni profilo
-  - [ ] Upload avatar/foto profilo
-- [ ] Sezione Sicurezza
-  - [ ] Cambio password
-  - [ ] Gestione sessioni attive
-  - [ ] Two-factor authentication (opzionale)
-- [ ] Sezione Preferenze
-  - [ ] Lingua (IT/EN)
-  - [ ] Formato data (DD/MM/YYYY vs MM/DD/YYYY)
-  - [ ] Tema default (Light/Dark/System)
-  - [ ] Notifiche email
-
-### Invio PDF via Email
-- [ ] Creare dialog "Invia PDF via Email"
-- [ ] Form con input email destinatario (con validazione)
-- [ ] Campo oggetto email (precompilato modificabile)
-- [ ] Campo messaggio/corpo email
-- [ ] Anteprima email prima invio
-- [ ] Integrazione API `/api/send` con allegato PDF
-- [ ] Conferma invio con toast notification
-- [ ] Log invii email in database (tabella EmailLog)
-- [ ] UI bottone "Invia Email" nella tabella rilievi
-
-### Testing Completo
+### Testing Workflow
 - [ ] Test edge cases form RMI
   - [ ] Validazione campi obbligatori
   - [ ] Limiti numerici (larghezza, altezza)
@@ -377,6 +391,6 @@ feat: implementa settings page con profilo utente
 
 ---
 
-**Ultimo commit**: 76c529c - Implementazione cambio stato interattivo nella tabella rilievi
+**Ultimo commit**: 000cd4e - docs: aggiunta roadmap completa del progetto
 **Branch corrente**: main
-**Prossima task suggerita**: Settings Page - Sezione Profilo Utente
+**Prossima task suggerita**: Testing completo workflow + ottimizzazioni UX

@@ -44,6 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { SendEmailDialog } from "./send-email-dialog"
 
 interface Rilievo {
   id: string
@@ -99,6 +100,8 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
   const [deleting, setDeleting] = useState(false)
   const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false)
+  const [selectedRilievoForEmail, setSelectedRilievoForEmail] = useState<Rilievo | null>(null)
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -344,7 +347,12 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                           <FileText className="mr-2 h-4 w-4" />
                           {generatingPdfId === rilievo.id ? "Generando..." : "Genera PDF"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem disabled>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedRilievoForEmail(rilievo)
+                            setEmailDialogOpen(true)
+                          }}
+                        >
                           <Mail className="mr-2 h-4 w-4" />
                           Invia Email
                         </DropdownMenuItem>
@@ -386,6 +394,17 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedRilievoForEmail && (
+        <SendEmailDialog
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+          rilievoId={selectedRilievoForEmail.id}
+          defaultEmail={selectedRilievoForEmail.indirizzo || ""}
+          cliente={selectedRilievoForEmail.cliente || ""}
+          commessa={selectedRilievoForEmail.commessa || ""}
+        />
+      )}
     </>
   )
 }
