@@ -136,11 +136,15 @@ export async function POST(request: NextRequest) {
     let finalCommessa = commessa;
 
     if (!finalCommessa) {
-      // Get the highest existing commessa number
+      const currentYear = new Date().getFullYear();
+
+      // Get the highest existing commessa number for current year
       const lastRilievo = await prisma.rilievo.findFirst({
         where: {
           commessa: {
             not: null,
+            startsWith: `RMI_`,
+            endsWith: `_${currentYear}`,
           },
         },
         orderBy: {
@@ -151,18 +155,19 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Generate next number (format: 0001, 0002, 0003, etc.)
+      // Generate next number (format: RMI_0001_2025, RMI_0002_2025, etc.)
       let nextNumber = 1;
       if (lastRilievo?.commessa) {
-        // Extract number from commessa (handle both numeric and alphanumeric)
-        const match = lastRilievo.commessa.match(/\d+$/);
+        // Extract number from commessa (pattern: RMI_XXXX_YYYY)
+        const match = lastRilievo.commessa.match(/RMI_(\d+)_\d{4}/);
         if (match) {
-          nextNumber = parseInt(match[0]) + 1;
+          nextNumber = parseInt(match[1]) + 1;
         }
       }
 
-      // Format with leading zeros (4 digits)
-      finalCommessa = String(nextNumber).padStart(4, '0');
+      // Format with leading zeros (4 digits) and year suffix
+      const progressivo = String(nextNumber).padStart(4, '0');
+      finalCommessa = `RMI_${progressivo}_${currentYear}`;
 
       // Ensure uniqueness (retry with incremented number if duplicate)
       let attempts = 0;
@@ -176,7 +181,8 @@ export async function POST(request: NextRequest) {
         if (!existing) break;
 
         nextNumber++;
-        finalCommessa = String(nextNumber).padStart(4, '0');
+        const newProgressivo = String(nextNumber).padStart(4, '0');
+        finalCommessa = `RMI_${newProgressivo}_${currentYear}`;
         attempts++;
       }
 
