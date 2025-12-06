@@ -23,7 +23,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { ModeToggle } from "@/components/mode-toggle"
 import { logout } from "@/app/auth/actions"
 
 const navigation = [
@@ -78,12 +77,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <div className="flex items-center justify-between px-2 py-1">
-              <span className="text-xs text-muted-foreground">Tema</span>
-              <ModeToggle />
-            </div>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => logout()}>
               <LogOut />

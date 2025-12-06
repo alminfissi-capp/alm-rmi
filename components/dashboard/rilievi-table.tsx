@@ -56,6 +56,7 @@ interface Rilievo {
   created_at: string
   num_serramenti: number
   creator_email?: string | null
+  creator_name?: string | null
 }
 
 interface RilieviTableProps {
@@ -318,7 +319,7 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
-                      {rilievo.creator_email || <span className="text-muted-foreground italic">N/A</span>}
+                      {rilievo.creator_name || rilievo.creator_email || <span className="text-muted-foreground italic">N/A</span>}
                     </span>
                   </TableCell>
                   <TableCell>

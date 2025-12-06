@@ -71,12 +71,13 @@ export async function GET(request: NextRequest) {
     // Build LIMIT clause
     const limitClause = limit ? `LIMIT ${parseInt(limit)}` : '';
 
-    // Fetch rilievi with creator email using raw SQL
+    // Fetch rilievi with creator email and name using raw SQL
     const query = `
       SELECT
         r.*,
         (SELECT COUNT(*)::int FROM serramenti WHERE rilievo_id = r.id) as num_serramenti,
-        u.email as creator_email
+        u.email as creator_email,
+        u.raw_user_meta_data->>'full_name' as creator_name
       FROM rilievi r
       LEFT JOIN auth.users u ON r.user_id = u.id
       ${whereClause}

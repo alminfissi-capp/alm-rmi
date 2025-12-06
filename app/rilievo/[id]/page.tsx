@@ -45,10 +45,10 @@ export default async function RilievoPage({
     <div className="flex flex-col h-screen">
       {/* Header */}
       <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-background px-6">
-        <Link href="/dashboard">
+        <Link href="/rilievi">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Dashboard
+            Lista Rilievi
           </Button>
         </Link>
         <div className="flex-1">

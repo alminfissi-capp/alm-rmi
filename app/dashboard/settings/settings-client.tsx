@@ -12,6 +12,7 @@ import { User, Mail, Calendar, Shield, Lock, Settings, Globe, Bell } from "lucid
 import { User as SupabaseUser } from "@supabase/supabase-js"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import { useTheme } from "next-themes"
 
 interface SettingsClientProps {
   user: SupabaseUser
@@ -25,6 +26,8 @@ interface UserPreferences {
 }
 
 export function SettingsClient({ user }: SettingsClientProps) {
+  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme } = useTheme()
   const [fullName, setFullName] = useState(user.user_metadata?.full_name || "")
   const [phone, setPhone] = useState(user.user_metadata?.phone || "")
   const [currentPassword, setCurrentPassword] = useState("")
@@ -39,6 +42,10 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [isLoadingPassword, setIsLoadingPassword] = useState(false)
   const [isLoadingPreferences, setIsLoadingPreferences] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const createdAt = new Date(user.created_at).toLocaleDateString("it-IT", {
     day: "numeric",
@@ -361,21 +368,27 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="theme">Tema</Label>
-                <Select
-                  value={preferences.theme}
-                  onValueChange={(value) =>
-                    setPreferences({ ...preferences, theme: value })
-                  }
-                >
-                  <SelectTrigger id="theme">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Chiaro</SelectItem>
-                    <SelectItem value="dark">Scuro</SelectItem>
-                    <SelectItem value="system">Sistema</SelectItem>
-                  </SelectContent>
-                </Select>
+                {!mounted ? (
+                  <Select disabled>
+                    <SelectTrigger id="theme">
+                      <SelectValue placeholder="Caricamento..." />
+                    </SelectTrigger>
+                  </Select>
+                ) : (
+                  <Select
+                    value={theme}
+                    onValueChange={(value) => setTheme(value)}
+                  >
+                    <SelectTrigger id="theme">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Chiaro</SelectItem>
+                      <SelectItem value="dark">Scuro</SelectItem>
+                      <SelectItem value="system">Sistema</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <Separator />
