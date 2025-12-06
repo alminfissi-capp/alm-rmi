@@ -132,6 +132,62 @@ export async function POST(request: NextRequest) {
       commessa,
     } = body;
 
+    // Auto-generate commessa number if not provided
+    let finalCommessa = commessa;
+
+    if (!finalCommessa) {
+      // Get the highest existing commessa number
+      const lastRilievo = await prisma.rilievo.findFirst({
+        where: {
+          commessa: {
+            not: null,
+          },
+        },
+        orderBy: {
+          commessa: 'desc',
+        },
+        select: {
+          commessa: true,
+        },
+      });
+
+      // Generate next number (format: 0001, 0002, 0003, etc.)
+      let nextNumber = 1;
+      if (lastRilievo?.commessa) {
+        // Extract number from commessa (handle both numeric and alphanumeric)
+        const match = lastRilievo.commessa.match(/\d+$/);
+        if (match) {
+          nextNumber = parseInt(match[0]) + 1;
+        }
+      }
+
+      // Format with leading zeros (4 digits)
+      finalCommessa = String(nextNumber).padStart(4, '0');
+
+      // Ensure uniqueness (retry with incremented number if duplicate)
+      let attempts = 0;
+      const maxAttempts = 100;
+
+      while (attempts < maxAttempts) {
+        const existing = await prisma.rilievo.findUnique({
+          where: { commessa: finalCommessa },
+        });
+
+        if (!existing) break;
+
+        nextNumber++;
+        finalCommessa = String(nextNumber).padStart(4, '0');
+        attempts++;
+      }
+
+      if (attempts >= maxAttempts) {
+        return NextResponse.json(
+          { error: 'Impossibile generare numero commessa univoco' },
+          { status: 500 }
+        );
+      }
+    }
+
     // Create new rilievo using query helper
     const rilievo = await createRilievo(supabase, {
       cliente: cliente || null,
@@ -140,7 +196,7 @@ export async function POST(request: NextRequest) {
       celltel: celltel || null,
       email: email || null,
       note_header: note_header || null,
-      commessa: commessa || null,
+      commessa: finalCommessa,
     });
 
     return NextResponse.json({ rilievo }, { status: 201 });

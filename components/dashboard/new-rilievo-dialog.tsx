@@ -45,7 +45,6 @@ interface NewRilievoDialogProps {
 
 type FormData = {
   cliente: string
-  commessa: string
   data: Date
   indirizzo: string
   celltel: string
@@ -64,7 +63,6 @@ export function NewRilievoDialog({
   const form = useForm<FormData>({
     defaultValues: {
       cliente: "",
-      commessa: "",
       data: new Date(),
       indirizzo: "",
       celltel: "",
@@ -116,41 +114,25 @@ export function NewRilievoDialog({
         <DialogHeader>
           <DialogTitle>Nuovo Rilievo</DialogTitle>
           <DialogDescription>
-            Crea un nuovo progetto/commessa inserendo i dati del cliente
+            Crea un nuovo progetto/commessa inserendo i dati del cliente. Il numero commessa sarà generato automaticamente.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="cliente"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cliente</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome cliente" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="commessa"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Commessa</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Numero commessa" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="cliente"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cliente</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nome cliente" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
