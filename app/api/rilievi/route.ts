@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       const maxAttempts = 100;
 
       while (attempts < maxAttempts) {
-        const existing = await prisma.rilievo.findUnique({
+        const existing = await prisma.rilievo.findFirst({
           where: { commessa: finalCommessa },
         });
 
