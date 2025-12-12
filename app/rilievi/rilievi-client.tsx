@@ -21,20 +21,26 @@ export function RilieviClient() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const fetchRilievi = async () => {
+  const fetchRilievi = async (signal?: AbortSignal) => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (search) params.append("search", search)
       if (statusFilter !== "all") params.append("status", statusFilter)
 
-      const response = await fetch(`/api/rilievi?${params.toString()}`)
+      const response = await fetch(`/api/rilievi?${params.toString()}`, {
+        signal, // Pass abort signal to fetch
+      })
       const data = await response.json()
 
       if (response.ok) {
         setRilievi(data.rilievi)
       }
     } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       console.error("Error fetching rilievi:", error)
     } finally {
       setLoading(false)
@@ -42,7 +48,15 @@ export function RilieviClient() {
   }
 
   useEffect(() => {
-    fetchRilievi()
+    // Create AbortController for this effect
+    const abortController = new AbortController()
+
+    fetchRilievi(abortController.signal)
+
+    // Cleanup: abort fetch if component unmounts or dependencies change
+    return () => {
+      abortController.abort()
+    }
   }, [search, statusFilter])
 
   const handleRilievoCreated = () => {

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getDashboardRilievi, createRilievo } from '@/lib/supabase/queries';
 import prisma from '@/lib/prisma';
+import { API_CONFIG, COMMESSA_CONFIG, HTTP_STATUS, ERROR_MESSAGES } from '@/lib/config/constants';
 
 // Force dynamic - no caching
 export const dynamic = 'force-dynamic'
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: ERROR_MESSAGES.UNAUTHORIZED },
+        { status: HTTP_STATUS.UNAUTHORIZED }
       );
     }
 
@@ -63,13 +64,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build ORDER BY clause
+    // Build ORDER BY clause with strict validation
     const validSortFields = ['created_at', 'updated_at', 'cliente', 'commessa', 'status'];
     const sortField = validSortFields.includes(sort) ? sort : 'created_at';
     const sortOrder = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
-    // Build LIMIT clause
-    const limitClause = limit ? `LIMIT ${parseInt(limit)}` : '';
+    // Build LIMIT clause with proper validation
+    let limitClause = '';
+    if (limit) {
+      const parsedLimit = parseInt(limit, 10);
+      // Validate: must be a positive integer between min and max
+      if (!isNaN(parsedLimit) && parsedLimit >= API_CONFIG.MIN_QUERY_LIMIT && parsedLimit <= API_CONFIG.MAX_QUERY_LIMIT) {
+        limitClause = `LIMIT ${parsedLimit}`;
+      } else {
+        return NextResponse.json(
+          { error: `Invalid limit parameter. Must be between ${API_CONFIG.MIN_QUERY_LIMIT} and ${API_CONFIG.MAX_QUERY_LIMIT}.` },
+          { status: HTTP_STATUS.BAD_REQUEST }
+        );
+      }
+    }
 
     // Fetch rilievi with creator email and name using raw SQL
     const query = `
@@ -117,8 +130,8 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: ERROR_MESSAGES.UNAUTHORIZED },
+        { status: HTTP_STATUS.UNAUTHORIZED }
       );
     }
 
@@ -138,60 +151,66 @@ export async function POST(request: NextRequest) {
 
     if (!finalCommessa) {
       const currentYear = new Date().getFullYear();
+      let retryCount = 0;
+      let success = false;
 
-      // Get the highest existing commessa number for current year
-      const lastRilievo = await prisma.rilievo.findFirst({
-        where: {
-          commessa: {
-            not: null,
-            startsWith: `RMI_`,
-            endsWith: `_${currentYear}`,
-          },
-        },
-        orderBy: {
-          commessa: 'desc',
-        },
-        select: {
-          commessa: true,
-        },
-      });
+      // Use transaction with retry logic to prevent race conditions
+      while (!success && retryCount < API_CONFIG.MAX_RETRY_ATTEMPTS) {
+        try {
+          await prisma.$transaction(async (tx) => {
+            // Get the highest existing commessa number for current year (with lock)
+            const lastRilievo = await tx.rilievo.findFirst({
+              where: {
+                commessa: {
+                  not: null,
+                  startsWith: `RMI_`,
+                  endsWith: `_${currentYear}`,
+                },
+              },
+              orderBy: {
+                commessa: 'desc',
+              },
+              select: {
+                commessa: true,
+              },
+            });
 
-      // Generate next number (format: RMI_0001_2025, RMI_0002_2025, etc.)
-      let nextNumber = 1;
-      if (lastRilievo?.commessa) {
-        // Extract number from commessa (pattern: RMI_XXXX_YYYY)
-        const match = lastRilievo.commessa.match(/RMI_(\d+)_\d{4}/);
-        if (match) {
-          nextNumber = parseInt(match[1]) + 1;
+            // Generate next number (format: RMI_0001_2025, RMI_0002_2025, etc.)
+            let nextNumber = 1;
+            if (lastRilievo?.commessa) {
+              // Extract number from commessa (pattern: RMI_XXXX_YYYY)
+              const match = lastRilievo.commessa.match(/RMI_(\d+)_\d{4}/);
+              if (match) {
+                nextNumber = parseInt(match[1], 10) + 1;
+              }
+            }
+
+            // Format with leading zeros and year suffix
+            const progressivo = String(nextNumber).padStart(COMMESSA_CONFIG.PROGRESSIVO_DIGITS, '0');
+            finalCommessa = `${COMMESSA_CONFIG.PREFIX}_${progressivo}_${currentYear}`;
+
+            // Verify uniqueness within transaction
+            const existing = await tx.rilievo.findFirst({
+              where: { commessa: finalCommessa },
+            });
+
+            if (existing) {
+              throw new Error('Duplicate commessa detected, retrying...');
+            }
+
+            success = true;
+          });
+        } catch (error) {
+          retryCount++;
+          if (retryCount >= API_CONFIG.MAX_RETRY_ATTEMPTS) {
+            return NextResponse.json(
+              { error: ERROR_MESSAGES.GENERATION_FAILED },
+              { status: HTTP_STATUS.INTERNAL_SERVER_ERROR }
+            );
+          }
+          // Wait a bit before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, API_CONFIG.RETRY_BASE_DELAY_MS * retryCount));
         }
-      }
-
-      // Format with leading zeros (4 digits) and year suffix
-      const progressivo = String(nextNumber).padStart(4, '0');
-      finalCommessa = `RMI_${progressivo}_${currentYear}`;
-
-      // Ensure uniqueness (retry with incremented number if duplicate)
-      let attempts = 0;
-      const maxAttempts = 100;
-
-      while (attempts < maxAttempts) {
-        const existing = await prisma.rilievo.findFirst({
-          where: { commessa: finalCommessa },
-        });
-
-        if (!existing) break;
-
-        nextNumber++;
-        const newProgressivo = String(nextNumber).padStart(4, '0');
-        finalCommessa = `RMI_${newProgressivo}_${currentYear}`;
-        attempts++;
-      }
-
-      if (attempts >= maxAttempts) {
-        return NextResponse.json(
-          { error: 'Impossibile generare numero commessa univoco' },
-          { status: 500 }
-        );
       }
     }
 

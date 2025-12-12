@@ -1,36 +1,289 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ALM-RMI - Rilevatore Misure Interattivo
 
-## Getting Started
+Sistema web professionale per la rilevazione misure serramenti in cantiere, sviluppato per **A.L.M. Infissi** (Palermo, Sicilia).
 
-First, run the development server:
+[![Next.js](https://img.shields.io/badge/Next.js-16.0.10-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)](https://supabase.com/)
+[![License](https://img.shields.io/badge/license-Private-red)](LICENSE)
 
+---
+
+## 📋 Descrizione
+
+**ALM-RMI** è un'applicazione web moderna che sostituisce il processo manuale Excel per la rilevazione delle misure dei serramenti. Permette ai tecnici di rilevare le misure direttamente in cantiere usando tablet o smartphone, con generazione automatica di PDF professionali.
+
+### 🎯 Obiettivi Principali
+
+- ✅ Gestione dinamica delle pagine (P1, P2, P3...)
+- ✅ Form completo e strutturato per tutti i dati necessari
+- ✅ Salvataggio automatico cloud
+- ✅ Generazione PDF professionale con logo aziendale
+- ✅ Responsive design (mobile/tablet/desktop)
+- ✅ Auto-incremento numero commessa (formato: RMI_0001_2025)
+
+---
+
+## 🚀 Tech Stack
+
+### Frontend
+- **Next.js 16** (App Router) - Framework React
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Shadcn/ui** - Componenti UI
+- **React Hook Form** + **Zod** - Form validation
+- **jsPDF** + **html2canvas** - Generazione PDF
+
+### Backend
+- **Supabase** - PostgreSQL database + Auth
+- **Prisma ORM** - Database client
+- **Resend** - Invio email
+
+### Deploy
+- **Vercel** - Hosting frontend
+- **Supabase Cloud** - Hosting backend
+
+---
+
+## 📦 Installazione
+
+### Prerequisiti
+
+- Node.js 18+
+- npm o yarn
+- Account Supabase (gratuito)
+
+### Setup
+
+1. **Clone del repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/alminfissi-capp/alm-rmi.git
+cd alm-rmi
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Installazione dipendenze**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Configurazione environment variables**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Crea un file `.env.local` nella root:
 
-## Learn More
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-To learn more about Next.js, take a look at the following resources:
+# Database (Prisma)
+DATABASE_URL=postgresql://postgres:[password]@[host]/[database]
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Email (Resend)
+RESEND_API_KEY=your-resend-api-key
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Setup database**
 
-## Deploy on Vercel
+Esegui le migrations Prisma:
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. **Avvia il server di sviluppo**
+```bash
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Apri [http://localhost:3000](http://localhost:3000) nel browser.
+
+---
+
+## 📁 Struttura Progetto
+
+```
+alm-rmi/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   │   ├── rilievi/       # CRUD rilievi
+│   │   ├── serramenti/    # CRUD serramenti
+│   │   ├── pdf/           # Generazione PDF
+│   │   └── dashboard/     # Statistiche
+│   ├── dashboard/         # Dashboard principale
+│   ├── rilievi/           # Lista rilievi
+│   ├── login/             # Autenticazione
+│   └── signup/            # Registrazione
+├── components/
+│   ├── rmi/               # Componenti form RMI
+│   ├── dashboard/         # Componenti dashboard
+│   ├── pdf/               # Generazione PDF
+│   └── ui/                # Shadcn/ui components
+├── lib/
+│   ├── supabase/          # Client Supabase
+│   ├── config/            # Configurazione app
+│   ├── types/             # TypeScript types
+│   └── constants/         # Costanti
+├── prisma/
+│   └── schema.prisma      # Database schema
+├── PRD/                   # Documentazione progetto
+└── public/                # Assets statici
+```
+
+---
+
+## 🔑 Funzionalità Principali
+
+### 1. **Autenticazione**
+- Login/Signup con email
+- Verifica email
+- Gestione profilo utente
+- Cambio password
+
+### 2. **Dashboard**
+- Statistiche rilievi (totali, in lavorazione, completati)
+- Lista rilievi con ricerca e filtri
+- Azioni rapide (modifica, elimina, genera PDF)
+
+### 3. **Form RMI**
+- Gestione dinamica pagine (aggiungi/rimuovi serramenti)
+- Sezioni complete:
+  - Dati cliente/commessa
+  - Tipologia e misure
+  - Colori
+  - Ferramenta
+  - Zanzariere
+  - Oscuranti
+  - E altro...
+- Auto-save ogni 3 secondi
+- Validazione real-time
+
+### 4. **Generazione PDF**
+- PDF professionale con logo A.L.M.
+- Una pagina per serramento
+- Download automatico
+- Invio via email
+
+### 5. **Auto-incremento Commessa**
+- Formato: `RMI_0001_2025`, `RMI_0002_2025`, etc.
+- Generazione automatica con anno corrente
+- Protezione race condition con transazioni
+- Retry logic con exponential backoff
+
+---
+
+## 🛠️ Script Disponibili
+
+```bash
+# Sviluppo
+npm run dev          # Avvia server dev (http://localhost:3000)
+
+# Build
+npm run build        # Build per produzione
+npm start            # Avvia server produzione
+
+# Database
+npx prisma studio    # UI per database
+npx prisma migrate dev  # Crea nuova migration
+npx prisma generate  # Genera Prisma client
+
+# Linting
+npm run lint         # ESLint check
+```
+
+---
+
+## 🔒 Sicurezza
+
+- **Row Level Security (RLS)** attivo su tutte le tabelle
+- **Validazione parametri API** con limiti configurabili
+- **Transazioni database** per prevenire race conditions
+- **Error Boundary** per gestione crash
+- **AbortController** per prevenire memory leak
+- **HTTPS obbligatorio** in produzione
+
+---
+
+## 📊 Database Schema
+
+### Tabelle Principali
+
+**rilievi**
+- `id` (UUID) - Primary key
+- `user_id` (UUID) - FK a auth.users
+- `cliente`, `data`, `indirizzo`, `email`, `celltel`
+- `commessa` (UNIQUE) - Numero commessa auto-generato
+- `status` (enum) - bozza, in_lavorazione, completato, archiviato
+
+**serramenti**
+- `id` (UUID) - Primary key
+- `rilievo_id` (UUID) - FK a rilievi
+- `page_number` (INT) - Numero pagina (P1, P2, P3...)
+- Campi misure, colori, ferramenta, etc.
+
+**pdf_generated**
+- `id` (UUID) - Primary key
+- `rilievo_id` (UUID) - FK a rilievi
+- `file_path` - Path in Supabase Storage
+
+---
+
+## 🎨 Design System
+
+### Colori Brand
+- **Primary Blue**: `#0288d1` - Blu A.L.M.
+- **Secondary Green**: `#7cb342` - Verde A.L.M.
+- **Danger Red**: `#f44336`
+
+### Typography
+- **Font Family**: Arial, Geist Sans
+- **Sizes**: Responsive con Tailwind
+
+---
+
+## 📝 Documentazione
+
+Per documentazione dettagliata, consulta:
+
+- **[RMI_PROJECT_SPEC.md](PRD/RMI_PROJECT_SPEC.md)** - Specifica completa progetto
+- **[QUICK_START.md](PRD/QUICK_START.md)** - Guida rapida implementazione
+- **[CHANGELOG.md](CHANGELOG.md)** - Storico modifiche
+
+---
+
+## 🚀 Deploy
+
+### Deploy su Vercel (consigliato)
+
+1. Push del codice su GitHub
+2. Importa il progetto su [Vercel](https://vercel.com)
+3. Configura le environment variables
+4. Deploy automatico ad ogni push su `main`
+
+**URL Produzione**: https://alm-rmi.vercel.app
+
+---
+
+## 🤝 Contributing
+
+Questo è un progetto privato per A.L.M. Infissi. Per modifiche o suggerimenti, contatta il team di sviluppo.
+
+---
+
+## 📞 Contatti
+
+**Progetto**: ALM-RMI - Rilevatore Misure Interattivo
+**Cliente**: A.L.M. Infissi, Palermo
+**Repository**: https://github.com/alminfissi-capp/alm-rmi
+**Deploy**: https://alm-rmi.vercel.app
+
+---
+
+## 📄 Licenza
+
+Copyright © 2025 A.L.M. Infissi. Tutti i diritti riservati.
+
+Questo software è proprietà privata e non può essere utilizzato, modificato o distribuito senza autorizzazione scritta.
+
+---
+
+**Sviluppato con ❤️ per A.L.M. Infissi**
