@@ -55,23 +55,44 @@ export function SendEmailDialog({
 
     setIsSending(true)
 
-    const sendPromise = fetch("/api/pdf/send-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        rilievoId,
-        recipientEmail,
-        recipientName,
-        subject,
-        message,
-      }),
-    }).then(async (response) => {
+    const sendPromise = (async () => {
+      // Step 1: Fetch rilievo data
+      const rilievoResponse = await fetch(`/api/rilievi/${rilievoId}`)
+      if (!rilievoResponse.ok) {
+        throw new Error("Errore durante il recupero dei dati del rilievo")
+      }
+      const { rilievo } = await rilievoResponse.json()
+
+      // Step 2: Generate PDF client-side
+      const { generatePDF } = await import("@/components/pdf/PDFGenerator")
+      const pdfBlob = await generatePDF(rilievo)
+
+      // Step 3: Convert blob to base64
+      const arrayBuffer = await pdfBlob.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      const pdfBase64 = buffer.toString('base64')
+
+      // Step 4: Send email with PDF as base64
+      const response = await fetch("/api/pdf/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipientEmail,
+          recipientName,
+          subject,
+          message,
+          pdfBase64,
+          fileName: `RMI_${rilievo.cliente || "Rilievo"}_${rilievo.commessa || "N-D"}.pdf`,
+        }),
+      })
+
       if (!response.ok) {
         const error = await response.json()
         throw new Error(error.error || "Errore durante l'invio dell'email")
       }
+
       return response.json()
-    })
+    })()
 
     toast.promise(sendPromise, {
       loading: "Preparazione e invio email in corso...",

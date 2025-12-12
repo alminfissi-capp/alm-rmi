@@ -138,29 +138,36 @@ export function RilieviTable({ rilievi, loading, onRefresh }: RilieviTableProps)
   const handleGeneratePDF = async (rilievoId: string) => {
     setGeneratingPdfId(rilievoId)
 
-    const generatePromise = fetch("/api/pdf/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rilievoId }),
-    }).then(async (response) => {
+    const generatePromise = (async () => {
+      // Fetch rilievo data
+      const response = await fetch(`/api/rilievi/${rilievoId}`)
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Errore durante la generazione del PDF")
+        throw new Error("Errore durante il recupero dei dati del rilievo")
       }
-      return response.json()
-    })
+      const { rilievo } = await response.json()
+
+      // Generate PDF client-side
+      const { generatePDF } = await import("@/components/pdf/PDFGenerator")
+      const pdfBlob = await generatePDF(rilievo)
+
+      // Create download link
+      const url = URL.createObjectURL(pdfBlob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `RMI_${rilievo.cliente || "Rilievo"}_${rilievo.commessa || "N-D"}_${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      return { success: true }
+    })()
 
     toast.promise(generatePromise, {
       loading: "Generazione PDF in corso...",
-      success: (data) => {
+      success: () => {
         setGeneratingPdfId(null)
-
-        // Download the PDF
-        if (data.pdf?.downloadUrl) {
-          window.open(data.pdf.downloadUrl, "_blank")
-        }
-
-        return "PDF generato con successo!"
+        return "PDF generato e scaricato con successo!"
       },
       error: (err) => {
         console.error("Error generating PDF:", err)
