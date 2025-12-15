@@ -7,6 +7,7 @@ import {
   Settings,
   LogOut,
   User,
+  Users,
 } from "lucide-react"
 import Logo from "@/public/alm.svg"
 
@@ -35,6 +36,11 @@ const navigation = [
     title: "Rilievi",
     url: "/rilievi",
     icon: FileText,
+  },
+  {
+    title: "Rubrica",
+    url: "/rubrica",
+    icon: Users,
   },
   {
     title: "Impostazioni",

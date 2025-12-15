@@ -1,8 +1,11 @@
 "use client"
 
+import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { RilievoFormData } from "@/lib/types/database.types"
 import Logo from "@/public/alm.svg"
 
@@ -10,9 +13,11 @@ interface HeaderSectionProps {
   formData: RilievoFormData
   updateField: (field: keyof RilievoFormData, value: string) => void
   readOnly?: boolean
+  clienteId?: string | null
+  clienteNome?: string | null
 }
 
-export function HeaderSection({ formData, updateField, readOnly = false }: HeaderSectionProps) {
+export function HeaderSection({ formData, updateField, readOnly = false, clienteId, clienteNome }: HeaderSectionProps) {
   return (
     <div className="border-[3px] border-alm-blue rounded-sm bg-background mb-4">
       <div className="grid grid-cols-12 gap-0">
@@ -23,6 +28,21 @@ export function HeaderSection({ formData, updateField, readOnly = false }: Heade
             aria-label="A.L.M. Infissi Logo"
           />
         </div>
+
+        {/* Cliente da Rubrica Badge */}
+        {clienteId && (
+          <div className="col-span-12 border-b-2 border-alm-blue px-4 py-2 bg-blue-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="bg-blue-600">Da Rubrica</Badge>
+                <span className="text-sm font-medium">{clienteNome}</span>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href={`/rubrica/${clienteId}`}>Visualizza Cliente</Link>
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Form Fields Column */}
         <div className="col-span-12 md:col-span-10 p-4">
@@ -38,7 +58,7 @@ export function HeaderSection({ formData, updateField, readOnly = false }: Heade
                 onChange={(e) => updateField("cliente", e.target.value)}
                 className="border-2 border-black/20 focus:border-alm-blue"
                 placeholder="Nome cliente..."
-                disabled={readOnly}
+                disabled={readOnly || !!clienteId}
               />
             </div>
 
@@ -67,7 +87,7 @@ export function HeaderSection({ formData, updateField, readOnly = false }: Heade
                 onChange={(e) => updateField("indirizzo", e.target.value)}
                 className="border-2 border-black/20 focus:border-alm-blue"
                 placeholder="Via, città, provincia..."
-                disabled={readOnly}
+                disabled={readOnly || !!clienteId}
               />
             </div>
 
@@ -83,7 +103,7 @@ export function HeaderSection({ formData, updateField, readOnly = false }: Heade
                 onChange={(e) => updateField("celltel", e.target.value)}
                 className="border-2 border-black/20 focus:border-alm-blue"
                 placeholder="+39 ..."
-                disabled={readOnly}
+                disabled={readOnly || !!clienteId}
               />
             </div>
 
@@ -98,7 +118,7 @@ export function HeaderSection({ formData, updateField, readOnly = false }: Heade
                 onChange={(e) => updateField("email", e.target.value)}
                 className="border-2 border-black/20 focus:border-alm-blue"
                 placeholder="cliente@email.com"
-                disabled={readOnly}
+                disabled={readOnly || !!clienteId}
               />
             </div>
 

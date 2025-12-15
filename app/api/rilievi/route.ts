@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
+      cliente_id,
       cliente,
       data,
       indirizzo,
@@ -216,6 +217,7 @@ export async function POST(request: NextRequest) {
 
     // Create new rilievo using query helper
     const rilievo = await createRilievo(supabase, {
+      cliente_id: cliente_id || null,
       cliente: cliente || null,
       data: data || null,
       indirizzo: indirizzo || null,

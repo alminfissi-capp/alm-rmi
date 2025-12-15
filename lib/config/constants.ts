@@ -107,6 +107,21 @@ export const RILIEVO_STATUS = {
 } as const
 
 /**
+ * Tipologie Cliente (Rubrica)
+ */
+export const CLIENTE_TIPOLOGIE = {
+  PRIVATO: 'privato',
+  AZIENDA: 'azienda',
+  ALTRO: 'altro',
+} as const
+
+export const CLIENTE_TIPOLOGIE_LABELS = {
+  privato: 'Privato',
+  azienda: 'Azienda',
+  altro: 'Altro',
+} as const
+
+/**
  * HTTP Status Codes (commonly used)
  */
 export const HTTP_STATUS = {

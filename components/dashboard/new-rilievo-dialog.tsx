@@ -7,6 +7,9 @@ import { toast } from "sonner"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { it } from "date-fns/locale"
+import { ClienteCombobox } from "./cliente-combobox"
+import { ClienteDialog } from "./cliente-dialog"
+import { Label } from "@/components/ui/label"
 
 import {
   Dialog,
@@ -60,6 +63,9 @@ export function NewRilievoDialog({
 }: NewRilievoDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [clienteId, setClienteId] = useState<string | null>(null)
+  const [showManualFields, setShowManualFields] = useState(true)
+  const [showClienteDialog, setShowClienteDialog] = useState(false)
   const form = useForm<FormData>({
     defaultValues: {
       cliente: "",
@@ -79,7 +85,10 @@ export function NewRilievoDialog({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        cliente_id: clienteId,
+      }),
     }).then(async (response) => {
       if (!response.ok) {
         throw new Error("Errore durante la creazione del rilievo")
@@ -120,19 +129,61 @@ export function NewRilievoDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="cliente"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cliente</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome cliente" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            {/* Combobox Rubrica */}
+            <div className="space-y-2">
+              <Label>Seleziona da Rubrica (opzionale)</Label>
+              <ClienteCombobox
+                value={clienteId}
+                onChange={(id, cliente) => {
+                  setClienteId(id)
+                  if (cliente) {
+                    // Auto-fill campi
+                    form.setValue('cliente', cliente.nome)
+                    form.setValue('indirizzo', cliente.indirizzo || '')
+                    form.setValue('celltel', cliente.telefono || '')
+                    form.setValue('email', cliente.email || '')
+                    setShowManualFields(false)
+                  } else {
+                    setShowManualFields(true)
+                  }
+                }}
+                onAddNew={() => setShowClienteDialog(true)}
+              />
+              {clienteId && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setClienteId(null)
+                    setShowManualFields(true)
+                    form.setValue('cliente', '')
+                    form.setValue('indirizzo', '')
+                    form.setValue('celltel', '')
+                    form.setValue('email', '')
+                  }}
+                >
+                  Inserimento Manuale
+                </Button>
               )}
-            />
+            </div>
+
+            {/* Campi manuali condizionali */}
+            {showManualFields && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="cliente"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cliente</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome cliente" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
             <FormField
               control={form.control}
@@ -238,6 +289,8 @@ export function NewRilievoDialog({
                 </FormItem>
               )}
             />
+              </>
+            )}
 
             <DialogFooter>
               <Button
@@ -256,6 +309,16 @@ export function NewRilievoDialog({
           </form>
         </Form>
       </DialogContent>
+
+      {/* Dialog Quick-Add Cliente */}
+      <ClienteDialog
+        open={showClienteDialog}
+        onOpenChange={setShowClienteDialog}
+        onSuccess={() => {
+          // Refresh combobox - il combobox si aggiorna automaticamente al mount
+          setShowClienteDialog(false)
+        }}
+      />
     </Dialog>
   )
 }

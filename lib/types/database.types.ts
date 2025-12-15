@@ -34,6 +34,9 @@ export interface Rilievo {
   id: string;
   user_id: string;
 
+  // NUOVO: Relazione con Cliente
+  cliente_id: string | null;
+
   // Dati cliente/commessa
   cliente: string | null;
   data: string | null; // ISO date string
@@ -142,6 +145,57 @@ export interface PDFGenerated {
   file_size: number | null;
   generated_at: string;
   generated_by: string | null;
+}
+
+/**
+ * Tipologia Cliente
+ */
+export type TipologiaCliente = 'privato' | 'azienda' | 'altro';
+
+/**
+ * Tabella CLIENTI (Rubrica)
+ */
+export interface Cliente {
+  id: string;
+  user_id: string;
+
+  // Dati base
+  nome: string;
+  indirizzo: string | null;
+  telefono: string | null;
+  email: string | null;
+
+  // Dati aggiuntivi
+  partita_iva_cf: string | null;
+  ragione_sociale: string | null;
+  tipologia: TipologiaCliente;
+  note: string | null;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Cliente con statistiche (per dashboard rubrica)
+ */
+export interface ClienteConRilievi extends Cliente {
+  num_rilievi: number;
+  ultimo_rilievo_data: string | null;
+}
+
+/**
+ * Form data per Cliente
+ */
+export interface ClienteFormData {
+  nome: string;
+  indirizzo: string;
+  telefono: string;
+  email: string;
+  partita_iva_cf: string;
+  ragione_sociale: string;
+  tipologia: TipologiaCliente | '';
+  note: string;
 }
 
 /**
@@ -319,6 +373,17 @@ export const EMPTY_RILIEVO_FORM: RilievoFormData = {
   email: '',
   note_header: '',
   commessa: '',
+};
+
+export const EMPTY_CLIENTE_FORM: ClienteFormData = {
+  nome: '',
+  indirizzo: '',
+  telefono: '',
+  email: '',
+  partita_iva_cf: '',
+  ragione_sociale: '',
+  tipologia: '',
+  note: '',
 };
 
 // ============================================

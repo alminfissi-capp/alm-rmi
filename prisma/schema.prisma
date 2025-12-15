@@ -20,6 +20,9 @@ model Rilievo {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   user_id    String   @db.Uuid
 
+  // NUOVO: Relazione con Cliente (nullable per backward compatibility)
+  cliente_id String?  @db.Uuid
+
   // Dati progetto/commessa
   cliente     String?
   data        DateTime? @db.Date
@@ -37,10 +40,12 @@ model Rilievo {
   status     String   @default("bozza")
 
   // Relations
-  serramenti Serramento[]
-  pdf        PDFGenerated[]
+  clienteRubrica Cliente? @relation(fields: [cliente_id], references: [id], onDelete: SetNull)
+  serramenti     Serramento[]
+  pdf            PDFGenerated[]
 
   @@index([user_id])
+  @@index([cliente_id])
   @@index([created_at(sort: Desc)])
   @@index([status])
   @@index([cliente])
@@ -154,4 +159,37 @@ model PDFGenerated {
 
   @@index([rilievo_id])
   @@map("pdf_generated")
+}
+
+// ============================================
+// TABELLA CLIENTI (Rubrica)
+// ============================================
+model Cliente {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+
+  // Dati base
+  nome               String
+  indirizzo          String?
+  telefono           String?
+  email              String?
+
+  // Dati aggiuntivi
+  partita_iva_cf     String?
+  ragione_sociale    String?
+  tipologia          String   @default("privato")
+  note               String?
+
+  // Metadata
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  rilievi    Rilievo[]
+
+  @@index([user_id])
+  @@index([nome])
+  @@index([tipologia])
+  @@index([email])
+  @@map("clienti")
 }

@@ -1,0 +1,295 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { Plus, Users, Building2, User, Download, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ClientiTable } from "@/components/dashboard/clienti-table"
+import { ClienteDialog } from "@/components/dashboard/cliente-dialog"
+import { ClienteConRilievi, ClienteFormData } from "@/lib/types/database.types"
+import { CLIENTE_TIPOLOGIE_LABELS } from "@/lib/config/constants"
+
+export function RubricaClient() {
+  const router = useRouter()
+  const [clienti, setClienti] = useState<ClienteConRilievi[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
+  const [tipologia, setTipologia] = useState("all")
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingCliente, setEditingCliente] = useState<ClienteConRilievi | null>(null)
+  const [migrating, setMigrating] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+
+  useEffect(() => {
+    fetchClienti()
+  }, [search, tipologia])
+
+  const fetchClienti = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (search) params.append('search', search)
+      if (tipologia && tipologia !== 'all') params.append('tipologia', tipologia)
+
+      const response = await fetch(`/api/clienti?${params.toString()}`)
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('Clienti data:', data)
+      setClienti(data.clienti || [])
+    } catch (error) {
+      console.error('Error fetching clienti:', error)
+      toast.error("Errore nel caricamento dei clienti")
+      setClienti([]) // Set empty array on error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEdit = (cliente: ClienteConRilievi) => {
+    setEditingCliente(cliente)
+    setDialogOpen(true)
+  }
+
+  const handleDialogClose = () => {
+    setDialogOpen(false)
+    setEditingCliente(null)
+  }
+
+  const handleSuccess = () => {
+    fetchClienti()
+  }
+
+  const handleMigrate = async () => {
+    if (!confirm("Vuoi migrare i dati clienti esistenti dai rilievi? Questa operazione creerà nuovi clienti in rubrica.")) {
+      return
+    }
+
+    setMigrating(true)
+    const migratePromise = fetch('/api/clienti/migrate', {
+      method: 'POST',
+    }).then(async (response) => {
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Errore durante la migrazione')
+      }
+      return response.json()
+    })
+
+    toast.promise(migratePromise, {
+      loading: "Migrazione in corso...",
+      success: (result) => {
+        setMigrating(false)
+        fetchClienti()
+        return result.message || "Migrazione completata con successo!"
+      },
+      error: (err) => {
+        setMigrating(false)
+        return err.message || "Errore durante la migrazione"
+      },
+    })
+  }
+
+  // ... existing code ...
+
+  const handleSyncGoogle = async () => {
+    if (!confirm("Sincronizzare i contatti Google? Questa operazione importerà i contatti da Google Contacts nella rubrica.")) {
+      return
+    }
+
+    setSyncing(true)
+    const syncPromise = fetch('/api/clienti/sync-google', {
+      method: 'POST'
+    }).then(async (response) => {
+      if (response.status === 401) {
+        const data = await response.json()
+        throw new Error(data.error || 'Token Google non trovato. Effettua login con Google.')
+      }
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Errore durante la sincronizzazione')
+      }
+
+      return response.json()
+    })
+
+    toast.promise(syncPromise, {
+      loading: "Sincronizzazione Google Contacts in corso...",
+      success: (result) => {
+        setSyncing(false)
+        fetchClienti()
+        return result.message || "Sincronizzazione completata!"
+      },
+      error: (err) => {
+        setSyncing(false)
+        return err.message || "Errore durante la sincronizzazione"
+      },
+    })
+  }
+
+  // Stats
+  const totalClienti = clienti?.length || 0
+  const clientiPrivati = clienti?.filter(c => c.tipologia === 'privato').length || 0
+  const clientiAziende = clienti?.filter(c => c.tipologia === 'azienda').length || 0
+
+  const initialData: ClienteFormData | undefined = editingCliente ? {
+    nome: editingCliente.nome,
+    indirizzo: editingCliente.indirizzo || '',
+    telefono: editingCliente.telefono || '',
+    email: editingCliente.email || '',
+    partita_iva_cf: editingCliente.partita_iva_cf || '',
+    ragione_sociale: editingCliente.ragione_sociale || '',
+    tipologia: editingCliente.tipologia,
+    note: editingCliente.note || '',
+  } : undefined
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Rubrica Clienti</h1>
+          <p className="text-muted-foreground">Gestisci l'anagrafica dei tuoi clienti</p>
+        </div>
+        <div className="flex gap-2">
+          {/* Google Sync Button */}
+          <Button
+            variant="outline"
+            onClick={handleSyncGoogle}
+            disabled={syncing || loading}
+            className="gap-2"
+          >
+            {syncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+            )}
+            {syncing ? "Sincronizzazione..." : "Sincronizza Google"}
+          </Button>
+
+          <Button variant="outline" onClick={handleMigrate} disabled={migrating}>
+            <Download className="mr-2 h-4 w-4" />
+            {migrating ? "Migrazione..." : "Migra Dati"}
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuovo Cliente
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Totale Clienti</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalClienti}</div>
+            <p className="text-xs text-muted-foreground">
+              Clienti registrati in rubrica
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Privati</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{clientiPrivati}</div>
+            <p className="text-xs text-muted-foreground">
+              Clienti privati
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Aziende</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{clientiAziende}</div>
+            <p className="text-xs text-muted-foreground">
+              Clienti aziende
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtra Clienti</CardTitle>
+          <CardDescription>Cerca per nome, ragione sociale o email</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <Input
+              placeholder="Cerca clienti..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-sm"
+            />
+            <Select value={tipologia} onValueChange={setTipologia}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Tipologia" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutte</SelectItem>
+                {Object.entries(CLIENTE_TIPOLOGIE_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <ClientiTable
+        clienti={clienti}
+        loading={loading}
+        onEdit={handleEdit}
+        onDeleted={handleSuccess}
+      />
+
+      {/* Dialog */}
+      <ClienteDialog
+        open={dialogOpen}
+        onOpenChange={handleDialogClose}
+        onSuccess={handleSuccess}
+        clienteId={editingCliente?.id}
+        initialData={initialData}
+      />
+    </div>
+  )
+}
