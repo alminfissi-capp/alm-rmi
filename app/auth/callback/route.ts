@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') || '/dashboard'
   const origin = requestUrl.origin
 
   if (code) {
@@ -13,6 +14,7 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code)
   }
 
-  // Redirect alla dashboard dopo il login
-  return NextResponse.redirect(`${origin}/dashboard`)
+  // Redirect alla pagina specificata (default: dashboard)
+  // Se viene da "Connetti Google" in rubrica, next sarà '/rubrica'
+  return NextResponse.redirect(`${origin}${next}`)
 }
