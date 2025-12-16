@@ -44,10 +44,32 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signUp(data)
+  const { data: signUpData, error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+    }
+  })
 
   if (error) {
+    // Handle specific Supabase errors
+    if (error.message.includes('already registered') ||
+        error.message.includes('already exists') ||
+        error.message.includes('User already registered')) {
+      return {
+        error: 'Questa email è già registrata. Se hai dimenticato la password, contatta l\'amministratore.'
+      }
+    }
     return { error: error.message }
+  }
+
+  // Check if user was created but identities is empty (means user already exists)
+  // This happens when email confirmations are disabled and user tries to sign up with existing email
+  if (signUpData?.user && (!signUpData.user.identities || signUpData.user.identities.length === 0)) {
+    return {
+      error: 'Questa email è già registrata. Se hai dimenticato la password, contatta l\'amministratore.'
+    }
   }
 
   revalidatePath('/', 'layout')
