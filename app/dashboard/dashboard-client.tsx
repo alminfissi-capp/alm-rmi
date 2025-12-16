@@ -8,6 +8,7 @@ import { ActivityChart } from "@/components/dashboard/activity-chart"
 import { StatusDistribution } from "@/components/dashboard/status-distribution"
 import { RecentRilievi } from "@/components/dashboard/recent-rilievi"
 import { NewRilievoDialog } from "@/components/dashboard/new-rilievo-dialog"
+import { User as SupabaseUser } from "@supabase/supabase-js"
 
 interface DashboardStats {
   totalRilievi: number
@@ -18,7 +19,11 @@ interface DashboardStats {
   monthlyData: Record<string, number>
 }
 
-export function DashboardClient() {
+interface DashboardClientProps {
+  user: SupabaseUser
+}
+
+export function DashboardClient({ user }: DashboardClientProps) {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentRilievi, setRecentRilievi] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,12 +63,17 @@ export function DashboardClient() {
     fetchDashboardData()
   }
 
+  // Get user display name
+  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Utente'
+
   return (
     <div className="flex flex-1 flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Benvenuto, {displayName}
+          </h2>
           <p className="text-muted-foreground">
             Panoramica dei tuoi rilievi e attività
           </p>
