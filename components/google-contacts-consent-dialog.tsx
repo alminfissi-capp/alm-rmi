@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { AlertCircle } from 'lucide-react'
 
 interface GoogleContactsConsentDialogProps {
@@ -38,18 +37,19 @@ export function GoogleContactsConsentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={!isLoading}>
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-500" />
-            Consenso Informato - Sincronizzazione Contatti Google
-          </DialogTitle>
-          <DialogDescription>
-            Prima di procedere con la sincronizzazione, è necessario prendere visione delle seguenti informazioni
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl h-[85vh] overflow-hidden p-0" showCloseButton={!isLoading}>
+        <div className="flex flex-col h-full">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              Consenso Informato - Sincronizzazione Contatti Google
+            </DialogTitle>
+            <DialogDescription>
+              Prima di procedere con la sincronizzazione, è necessario prendere visione delle seguenti informazioni
+            </DialogDescription>
+          </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 pr-4 my-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4 text-sm">
             <section>
               <h3 className="font-semibold text-base mb-2">Informativa sul Trattamento dei Dati Personali</h3>
@@ -148,43 +148,46 @@ export function GoogleContactsConsentDialog({
               </p>
             </section>
           </div>
-        </ScrollArea>
+          </div>
 
-        <div className="flex items-start space-x-2 py-4 border-t flex-shrink-0">
-          <Checkbox
-            id="consent"
-            checked={hasReadAndAccepted}
-            onCheckedChange={(checked) => setHasReadAndAccepted(checked === true)}
-            disabled={isLoading}
-          />
-          <Label
-            htmlFor="consent"
-            className="text-sm font-normal leading-tight cursor-pointer"
-          >
-            Ho letto e compreso l'informativa sul trattamento dei dati personali e acconsento
-            espressamente alla sincronizzazione dei miei contatti Google nel sistema RMI gestito
-            da A.L.M. Infissi. Sono consapevole che i dati entreranno nella disponibilità del
-            titolare del trattamento.
-          </Label>
+          <div className="px-6 py-4 border-t">
+            <div className="flex items-start space-x-2 mb-4">
+              <Checkbox
+                id="consent"
+                checked={hasReadAndAccepted}
+                onCheckedChange={(checked) => setHasReadAndAccepted(checked === true)}
+                disabled={isLoading}
+              />
+              <Label
+                htmlFor="consent"
+                className="text-sm font-normal leading-tight cursor-pointer"
+              >
+                Ho letto e compreso l'informativa sul trattamento dei dati personali e acconsento
+                espressamente alla sincronizzazione dei miei contatti Google nel sistema RMI gestito
+                da A.L.M. Infissi. Sono consapevole che i dati entreranno nella disponibilità del
+                titolare del trattamento.
+              </Label>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isLoading}
+              >
+                Annulla
+              </Button>
+              <Button
+                type="button"
+                onClick={handleAccept}
+                disabled={!hasReadAndAccepted || isLoading}
+              >
+                Accetto e Procedi
+              </Button>
+            </DialogFooter>
+          </div>
         </div>
-
-        <DialogFooter className="flex-shrink-0">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-          >
-            Annulla
-          </Button>
-          <Button
-            type="button"
-            onClick={handleAccept}
-            disabled={!hasReadAndAccepted || isLoading}
-          >
-            Accetto e Procedi
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
