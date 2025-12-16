@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Plus, Users, Building2, User, Download, Loader2 } from "lucide-react"
+import { Plus, Users, Building2, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -22,7 +22,6 @@ export function RubricaClient() {
   const [tipologia, setTipologia] = useState("all")
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCliente, setEditingCliente] = useState<ClienteConRilievi | null>(null)
-  const [migrating, setMigrating] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [googleConnected, setGoogleConnected] = useState(false)
   const [checkingGoogle, setCheckingGoogle] = useState(true)
@@ -100,38 +99,6 @@ export function RubricaClient() {
   const handleSuccess = () => {
     fetchClienti()
   }
-
-  const handleMigrate = async () => {
-    if (!confirm("Vuoi migrare i dati clienti esistenti dai rilievi? Questa operazione creerà nuovi clienti in rubrica.")) {
-      return
-    }
-
-    setMigrating(true)
-    const migratePromise = fetch('/api/clienti/migrate', {
-      method: 'POST',
-    }).then(async (response) => {
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Errore durante la migrazione')
-      }
-      return response.json()
-    })
-
-    toast.promise(migratePromise, {
-      loading: "Migrazione in corso...",
-      success: (result) => {
-        setMigrating(false)
-        fetchClienti()
-        return result.message || "Migrazione completata con successo!"
-      },
-      error: (err) => {
-        setMigrating(false)
-        return err.message || "Errore durante la migrazione"
-      },
-    })
-  }
-
-  // ... existing code ...
 
   const handleConnectGoogle = async () => {
     try {
@@ -328,10 +295,6 @@ export function RubricaClient() {
             </Button>
           )}
 
-          <Button variant="outline" onClick={handleMigrate} disabled={migrating}>
-            <Download className="mr-2 h-4 w-4" />
-            {migrating ? "Migrazione..." : "Migra Dati"}
-          </Button>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nuovo Cliente
