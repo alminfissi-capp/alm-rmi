@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { ArrowLeft, Pencil, Trash2, Plus, Eye } from "lucide-react"
@@ -42,7 +42,8 @@ interface ClienteWithRilievi extends Cliente {
   }>
 }
 
-export default function ClienteDetailPage({ params }: { params: { id: string } }) {
+export default function ClienteDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const [cliente, setCliente] = useState<ClienteWithRilievi | null>(null)
   const [loading, setLoading] = useState(true)
@@ -52,12 +53,12 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     fetchCliente()
-  }, [params.id])
+  }, [id])
 
   const fetchCliente = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/clienti/${params.id}`)
+      const response = await fetch(`/api/clienti/${id}`)
       if (!response.ok) throw new Error("Cliente non trovato")
       const { cliente } = await response.json()
       setCliente(cliente)
@@ -72,7 +73,7 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
 
   const handleDelete = async () => {
     setDeleting(true)
-    const deletePromise = fetch(`/api/clienti/${params.id}`, {
+    const deletePromise = fetch(`/api/clienti/${id}`, {
       method: "DELETE",
     }).then(async (response) => {
       if (!response.ok) {
