@@ -38,8 +38,8 @@ export function GoogleContactsConsentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]" showCloseButton={!isLoading}>
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col" showCloseButton={!isLoading}>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-amber-500" />
             Consenso Informato - Sincronizzazione Contatti Google
@@ -49,7 +49,7 @@ export function GoogleContactsConsentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-4 my-4">
           <div className="space-y-4 text-sm">
             <section>
               <h3 className="font-semibold text-base mb-2">Informativa sul Trattamento dei Dati Personali</h3>
@@ -150,7 +150,7 @@ export function GoogleContactsConsentDialog({
           </div>
         </ScrollArea>
 
-        <div className="flex items-start space-x-2 py-4 border-t">
+        <div className="flex items-start space-x-2 py-4 border-t flex-shrink-0">
           <Checkbox
             id="consent"
             checked={hasReadAndAccepted}
@@ -168,7 +168,7 @@ export function GoogleContactsConsentDialog({
           </Label>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button
             type="button"
             variant="outline"
