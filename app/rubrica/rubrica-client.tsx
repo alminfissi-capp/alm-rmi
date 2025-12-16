@@ -27,6 +27,7 @@ export function RubricaClient() {
   const [checkingGoogle, setCheckingGoogle] = useState(true)
   const [consentDialogOpen, setConsentDialogOpen] = useState(false)
   const [hasConsent, setHasConsent] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false) // true = mostra dialog per connessione, false = per sync
 
   useEffect(() => {
     fetchClienti()
@@ -101,6 +102,18 @@ export function RubricaClient() {
   }
 
   const handleConnectGoogle = async () => {
+    // Prima di connettersi, verifica se l'utente ha già dato il consenso
+    if (!hasConsent) {
+      setIsConnecting(true)
+      setConsentDialogOpen(true)
+      return
+    }
+
+    // Se ha già il consenso, procedi direttamente con la connessione
+    performGoogleConnection()
+  }
+
+  const performGoogleConnection = async () => {
     try {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
@@ -128,13 +141,8 @@ export function RubricaClient() {
   }
 
   const handleSyncGoogle = async () => {
-    // Verifica consenso prima di procedere
-    if (!hasConsent) {
-      setConsentDialogOpen(true)
-      return
-    }
-
-    // Procedi con la sincronizzazione
+    // Il consenso è già stato dato al momento della connessione
+    // Procedi direttamente con la sincronizzazione
     performSync()
   }
 
@@ -161,9 +169,16 @@ export function RubricaClient() {
       // Aggiorna lo stato locale
       setHasConsent(true)
       setConsentDialogOpen(false)
+      setSyncing(false)
 
-      // Procedi con la sincronizzazione
-      performSync()
+      // Se stiamo connettendo, procedi con l'autenticazione Google
+      if (isConnecting) {
+        setIsConnecting(false)
+        performGoogleConnection()
+      } else {
+        // Altrimenti procedi con la sincronizzazione (caso legacy, non dovrebbe più succedere)
+        performSync()
+      }
     } catch (error) {
       console.error('Error saving consent:', error)
       toast.error('Errore nel salvataggio del consenso')
@@ -393,7 +408,14 @@ export function RubricaClient() {
       {/* Consent Dialog */}
       <GoogleContactsConsentDialog
         open={consentDialogOpen}
-        onOpenChange={setConsentDialogOpen}
+        onOpenChange={(open) => {
+          setConsentDialogOpen(open)
+          if (!open) {
+            // Se il dialog viene chiuso senza accettare, resetta lo stato di connessione
+            setIsConnecting(false)
+            setSyncing(false)
+          }
+        }}
         onAccept={handleConsentAccept}
         isLoading={syncing}
       />
