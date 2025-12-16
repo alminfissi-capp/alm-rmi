@@ -37,19 +37,18 @@ export function GoogleContactsConsentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[85vh] overflow-hidden p-0" showCloseButton={!isLoading}>
-        <div className="flex flex-col h-full">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b">
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
-              Consenso Informato - Sincronizzazione Contatti Google
-            </DialogTitle>
-            <DialogDescription>
-              Prima di procedere con la sincronizzazione, è necessario prendere visione delle seguenti informazioni
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh]" showCloseButton={!isLoading}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-amber-500" />
+            Consenso Informato - Sincronizzazione Contatti Google
+          </DialogTitle>
+          <DialogDescription>
+            Prima di procedere con la sincronizzazione, è necessario prendere visione delle seguenti informazioni
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="overflow-y-auto max-h-[50vh] pr-2">
           <div className="space-y-4 text-sm">
             <section>
               <h3 className="font-semibold text-base mb-2">Informativa sul Trattamento dei Dati Personali</h3>
@@ -148,46 +147,43 @@ export function GoogleContactsConsentDialog({
               </p>
             </section>
           </div>
-          </div>
-
-          <div className="px-6 py-4 border-t">
-            <div className="flex items-start space-x-2 mb-4">
-              <Checkbox
-                id="consent"
-                checked={hasReadAndAccepted}
-                onCheckedChange={(checked) => setHasReadAndAccepted(checked === true)}
-                disabled={isLoading}
-              />
-              <Label
-                htmlFor="consent"
-                className="text-sm font-normal leading-tight cursor-pointer"
-              >
-                Ho letto e compreso l'informativa sul trattamento dei dati personali e acconsento
-                espressamente alla sincronizzazione dei miei contatti Google nel sistema RMI gestito
-                da A.L.M. Infissi. Sono consapevole che i dati entreranno nella disponibilità del
-                titolare del trattamento.
-              </Label>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Annulla
-              </Button>
-              <Button
-                type="button"
-                onClick={handleAccept}
-                disabled={!hasReadAndAccepted || isLoading}
-              >
-                Accetto e Procedi
-              </Button>
-            </DialogFooter>
-          </div>
         </div>
+
+        <div className="flex items-start space-x-2 pt-4 border-t mt-4">
+          <Checkbox
+            id="consent"
+            checked={hasReadAndAccepted}
+            onCheckedChange={(checked) => setHasReadAndAccepted(checked === true)}
+            disabled={isLoading}
+          />
+          <Label
+            htmlFor="consent"
+            className="text-sm font-normal leading-tight cursor-pointer"
+          >
+            Ho letto e compreso l'informativa sul trattamento dei dati personali e acconsento
+            espressamente alla sincronizzazione dei miei contatti Google nel sistema RMI gestito
+            da A.L.M. Infissi. Sono consapevole che i dati entreranno nella disponibilità del
+            titolare del trattamento.
+          </Label>
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
+            Annulla
+          </Button>
+          <Button
+            type="button"
+            onClick={handleAccept}
+            disabled={!hasReadAndAccepted || isLoading}
+          >
+            Accetto e Procedi
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
