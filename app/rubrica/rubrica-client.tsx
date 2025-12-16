@@ -102,14 +102,15 @@ export function RubricaClient() {
   }
 
   const handleConnectGoogle = async () => {
-    // Prima di connettersi, verifica se l'utente ha già dato il consenso
-    if (!hasConsent) {
+    // Se l'utente non è ancora connesso a Google, mostra sempre il dialog del consenso
+    // anche se ha già dato il consenso in passato (potrebbe aver revocato l'accesso)
+    if (!googleConnected) {
       setIsConnecting(true)
       setConsentDialogOpen(true)
       return
     }
 
-    // Se ha già il consenso, procedi direttamente con la connessione
+    // Se è già connesso (caso improbabile), procedi direttamente
     performGoogleConnection()
   }
 
