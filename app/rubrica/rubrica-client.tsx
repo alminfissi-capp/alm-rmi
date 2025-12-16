@@ -250,11 +250,11 @@ export function RubricaClient() {
   } : undefined
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-1 flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Rubrica Clienti</h1>
+          <h2 className="text-2xl font-bold tracking-tight">Rubrica Clienti</h2>
           <p className="text-muted-foreground">Gestisci l'anagrafica dei tuoi clienti</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
