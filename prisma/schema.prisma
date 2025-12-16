@@ -193,3 +193,30 @@ model Cliente {
   @@index([email])
   @@map("clienti")
 }
+
+// ============================================
+// TABELLA USER_CONSENTS (Consensi GDPR)
+// ============================================
+model UserConsent {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              String   @db.Uuid
+
+  // Tipo e stato del consenso
+  consent_type         String   // es: "google_contacts_sync"
+  consent_given        Boolean  @default(false)
+  consent_date         DateTime @db.Timestamptz(6)
+
+  // Tracciabilità GDPR
+  ip_address           String?
+  user_agent           String?
+  consent_text_version String   @default("1.0")
+
+  // Metadata
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([user_id])
+  @@index([consent_type])
+  @@unique([user_id, consent_type])
+  @@map("user_consents")
+}

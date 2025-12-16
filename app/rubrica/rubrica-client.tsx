@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ClientiTable } from "@/components/dashboard/clienti-table"
 import { ClienteDialog } from "@/components/dashboard/cliente-dialog"
+import { GoogleContactsConsentDialog } from "@/components/google-contacts-consent-dialog"
 import { ClienteConRilievi, ClienteFormData } from "@/lib/types/database.types"
 import { CLIENTE_TIPOLOGIE_LABELS } from "@/lib/config/constants"
 
@@ -25,10 +26,13 @@ export function RubricaClient() {
   const [syncing, setSyncing] = useState(false)
   const [googleConnected, setGoogleConnected] = useState(false)
   const [checkingGoogle, setCheckingGoogle] = useState(true)
+  const [consentDialogOpen, setConsentDialogOpen] = useState(false)
+  const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
     fetchClienti()
     checkGoogleConnection()
+    checkConsent()
   }, [search, tipologia])
 
   const checkGoogleConnection = async () => {
@@ -43,6 +47,18 @@ export function RubricaClient() {
       console.error('Error checking Google connection:', error)
     } finally {
       setCheckingGoogle(false)
+    }
+  }
+
+  const checkConsent = async () => {
+    try {
+      const response = await fetch('/api/consent/check?type=google_contacts_sync')
+      if (response.ok) {
+        const data = await response.json()
+        setHasConsent(data.hasConsent)
+      }
+    } catch (error) {
+      console.error('Error checking consent:', error)
     }
   }
 
@@ -145,10 +161,50 @@ export function RubricaClient() {
   }
 
   const handleSyncGoogle = async () => {
-    if (!confirm("Sincronizzare i contatti Google? Questa operazione importerà i contatti da Google Contacts nella rubrica.")) {
+    // Verifica consenso prima di procedere
+    if (!hasConsent) {
+      setConsentDialogOpen(true)
       return
     }
 
+    // Procedi con la sincronizzazione
+    performSync()
+  }
+
+  const handleConsentAccept = async () => {
+    try {
+      setSyncing(true)
+
+      // Salva il consenso nel database
+      const consentResponse = await fetch('/api/consent/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          consentType: 'google_contacts_sync',
+          consentGiven: true,
+        }),
+      })
+
+      if (!consentResponse.ok) {
+        throw new Error('Errore nel salvataggio del consenso')
+      }
+
+      // Aggiorna lo stato locale
+      setHasConsent(true)
+      setConsentDialogOpen(false)
+
+      // Procedi con la sincronizzazione
+      performSync()
+    } catch (error) {
+      console.error('Error saving consent:', error)
+      toast.error('Errore nel salvataggio del consenso')
+      setSyncing(false)
+    }
+  }
+
+  const performSync = async () => {
     setSyncing(true)
     const syncPromise = fetch('/api/clienti/sync-google', {
       method: 'POST'
@@ -171,7 +227,7 @@ export function RubricaClient() {
       success: (result) => {
         setSyncing(false)
         fetchClienti()
-        checkGoogleConnection() // Ricontrolla lo stato
+        checkGoogleConnection()
         return result.message || "Sincronizzazione completata!"
       },
       error: (err) => {
@@ -369,6 +425,14 @@ export function RubricaClient() {
         onSuccess={handleSuccess}
         clienteId={editingCliente?.id}
         initialData={initialData}
+      />
+
+      {/* Consent Dialog */}
+      <GoogleContactsConsentDialog
+        open={consentDialogOpen}
+        onOpenChange={setConsentDialogOpen}
+        onAccept={handleConsentAccept}
+        isLoading={syncing}
       />
     </div>
   )
