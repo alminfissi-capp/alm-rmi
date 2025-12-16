@@ -48,7 +48,7 @@ export function GoogleContactsConsentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[50vh] pr-2">
+        <div className="overflow-y-auto max-h-[40vh] pr-2">
           <div className="space-y-4 text-sm">
             <section>
               <h3 className="font-semibold text-base mb-2">Informativa sul Trattamento dei Dati Personali</h3>
