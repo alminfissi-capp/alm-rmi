@@ -18,7 +18,7 @@ export default function RubricaLayout({
             <h1 className="text-lg font-semibold">Rubrica Clienti</h1>
           </div>
         </header>
-        <main className="flex flex-1 flex-col gap-4 p-4">
+        <main className="flex flex-1 flex-col gap-3 p-3">
           {children}
         </main>
       </SidebarInset>

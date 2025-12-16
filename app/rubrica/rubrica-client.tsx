@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Plus, Users, Building2, User, Loader2 } from "lucide-react"
+import { Plus, Loader2, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ClientiTable } from "@/components/dashboard/clienti-table"
 import { ClienteDialog } from "@/components/dashboard/cliente-dialog"
 import { GoogleContactsConsentDialog } from "@/components/google-contacts-consent-dialog"
@@ -30,6 +31,7 @@ export function RubricaClient() {
   const [isConnecting, setIsConnecting] = useState(false) // true = mostra dialog per connessione, false = per sync
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 25
+  const [isFiltersOpen, setIsFiltersOpen] = useState(true)
 
   useEffect(() => {
     fetchClienti()
@@ -250,7 +252,7 @@ export function RubricaClient() {
   } : undefined
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -263,56 +265,23 @@ export function RubricaClient() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Totale Clienti</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalClienti}</div>
-            <p className="text-xs text-muted-foreground">
-              Clienti registrati in rubrica
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Privati</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{clientiPrivati}</div>
-            <p className="text-xs text-muted-foreground">
-              Clienti privati
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Aziende</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{clientiAziende}</div>
-            <p className="text-xs text-muted-foreground">
-              Clienti aziende
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtra Clienti</CardTitle>
-          <CardDescription>Cerca per nome, ragione sociale o email, oppure importa da Google</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
+      <Collapsible open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <CardTitle>Filtra Clienti</CardTitle>
+                  <CardDescription>Cerca per nome, ragione sociale o email, oppure importa da Google</CardDescription>
+                </div>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isFiltersOpen ? '' : '-rotate-90'}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pb-4">
+          <div className="flex flex-col gap-3">
             <div className="flex gap-4">
               <Input
                 placeholder="Cerca clienti..."
@@ -334,7 +303,7 @@ export function RubricaClient() {
             </div>
 
             {/* Google Connection/Sync Button */}
-            <div className="flex items-center gap-2 pt-2 border-t">
+            <div className="flex items-center gap-2 pt-1.5 border-t">
               <p className="text-sm text-muted-foreground">Importa contatti:</p>
               {checkingGoogle ? (
                 <Button variant="outline" size="sm" disabled className="gap-2">
@@ -405,7 +374,9 @@ export function RubricaClient() {
             </div>
           </div>
         </CardContent>
+          </CollapsibleContent>
       </Card>
+      </Collapsible>
 
       {/* Pagination Controls */}
       {!loading && totalClienti > 0 && (
