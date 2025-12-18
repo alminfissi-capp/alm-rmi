@@ -13,6 +13,8 @@ Sistema web professionale per la rilevazione misure serramenti in cantiere, svil
 
 **ALM-RMI** è un'applicazione web moderna che sostituisce il processo manuale Excel per la rilevazione delle misure dei serramenti. Permette ai tecnici di rilevare le misure direttamente in cantiere usando tablet o smartphone, con generazione automatica di PDF professionali.
 
+Include un **Configuratore Infissi** interattivo con anteprima 3D e calcolo preventivi in tempo reale.
+
 ### 🎯 Obiettivi Principali
 
 - ✅ Gestione dinamica delle pagine (P1, P2, P3...)
@@ -21,6 +23,8 @@ Sistema web professionale per la rilevazione misure serramenti in cantiere, svil
 - ✅ Generazione PDF professionale con logo aziendale
 - ✅ Responsive design (mobile/tablet/desktop)
 - ✅ Auto-incremento numero commessa (formato: RMI_0001_2025)
+- ✅ **Configuratore Infissi** con anteprima 3D e preventivazione
+- ✅ **Tema Retro-Futuristico Cyberpunk** con effetti luminosi
 
 ---
 
@@ -111,8 +115,11 @@ alm-rmi/
 │   │   └── dashboard/     # Statistiche
 │   ├── dashboard/         # Dashboard principale
 │   ├── rilievi/           # Lista rilievi
+│   ├── rubrica/           # Gestione clienti
+│   ├── configuratore/     # 🆕 Configuratore infissi
 │   ├── login/             # Autenticazione
-│   └── signup/            # Registrazione
+│   ├── signup/            # Registrazione
+│   └── globals.css        # 🆕 Tema cyberpunk globale
 ├── components/
 │   ├── rmi/               # Componenti form RMI
 │   ├── dashboard/         # Componenti dashboard
@@ -168,6 +175,19 @@ alm-rmi/
 - Generazione automatica con anno corrente
 - Protezione race condition con transazioni
 - Retry logic con exponential backoff
+
+### 6. **Configuratore Infissi** 🎨
+- **5 Step di configurazione**:
+  1. Tipo infisso (finestra, porta-finestra, scorrevole, vetrata fissa)
+  2. Dimensioni personalizzate e serie profilo
+  3. Colori RAL e tipo vetro
+  4. Prestazioni (isolamento termico, acustico, sicurezza)
+  5. Accessori (maniglie, zanzariere, tapparelle)
+- **Anteprima 3D** in tempo reale con SVG
+- **Calcolo preventivo dinamico** al m²
+- **Riepilogo configurazione** completo
+- **Tema cyberpunk** con effetti luminosi
+- Database prodotti integrato (serie, colori, vetri, accessori)
 
 ---
 
@@ -229,14 +249,35 @@ npm run lint         # ESLint check
 
 ## 🎨 Design System
 
-### Colori Brand
-- **Primary Blue**: `#0288d1` - Blu A.L.M.
-- **Secondary Green**: `#7cb342` - Verde A.L.M.
-- **Danger Red**: `#f44336`
+### Tema Retro-Futuristico Cyberpunk
 
-### Typography
-- **Font Family**: Arial, Geist Sans
-- **Sizes**: Responsive con Tailwind
+**Palette Colori**
+- **Cyber Cyan**: `#64ffda` - Colore primario, effetti glow
+- **Cyber Teal**: `#4dd0e1` - Secondario, gradienti
+- **Dark Blue**: `#0a0e27`, `#1a1f3a`, `#0f1419` - Sfondo gradiente
+- **Muted Blue**: `rgba(30, 35, 55, 0.8)` - Card e pannelli
+- **Danger Red**: `#ef4444` - Errori
+
+**Typography**
+- **Heading Font**: Orbitron (700-900) - Titoli cyberpunk
+- **Body Font**: Inter - Testo leggibile
+- **Sizes**: Sistema responsive Tailwind
+
+**Effetti Visivi**
+- ✨ **Griglia di sfondo** traslucida cyan (stile Tron)
+- ✨ **Bordi luminosi** sulle card con glow multipli
+- ✨ **Backdrop blur** 20px su pannelli trasparenti
+- ✨ **Hover drammatici** con intensificazione glow
+- ✨ **Gradienti** cyan-teal su bottoni e accenti
+- ✨ **Box shadow** stratificati per profondità 3D
+- ✨ **Barre luminose** gradient che appaiono in hover
+
+**Componenti Stilizzati**
+- Card con bordi `2px solid rgba(100, 255, 218, 0.3)`
+- Bottoni primary con gradiente cyan-teal
+- Input con focus glow cyan
+- Sidebar con bordo destro luminoso
+- Tabelle con righe hover glow
 
 ---
 
