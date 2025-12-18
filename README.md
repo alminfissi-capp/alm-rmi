@@ -37,6 +37,7 @@ Include un **Configuratore Infissi** interattivo con anteprima 3D e calcolo prev
 - **Shadcn/ui** - Componenti UI
 - **React Hook Form** + **Zod** - Form validation
 - **jsPDF** + **html2canvas** - Generazione PDF
+- **dxf-parser** - Parsing file DXF (CAD)
 
 ### Backend
 - **Supabase** - PostgreSQL database + Auth
@@ -124,16 +125,20 @@ alm-rmi/
 │   ├── rmi/               # Componenti form RMI
 │   ├── dashboard/         # Componenti dashboard
 │   ├── pdf/               # Generazione PDF
-│   └── ui/                # Shadcn/ui components
+│   ├── ui/                # Shadcn/ui components
+│   └── DxfViewer.jsx      # 🆕 Viewer profili DXF
 ├── lib/
 │   ├── supabase/          # Client Supabase
 │   ├── config/            # Configurazione app
 │   ├── types/             # TypeScript types
-│   └── constants/         # Costanti
+│   ├── constants/         # Costanti
+│   └── profili-config.js  # 🆕 Mapping profili DXF
 ├── prisma/
 │   └── schema.prisma      # Database schema
 ├── PRD/                   # Documentazione progetto
-└── public/                # Assets statici
+├── public/                # Assets statici
+│   └── profili/           # 🆕 File DXF profili tecnici
+└── AL_profili/            # 🆕 File DXF originali (sorgente)
 ```
 
 ---
@@ -188,6 +193,64 @@ alm-rmi/
 - **Riepilogo configurazione** completo
 - **Tema cyberpunk** con effetti luminosi
 - Database prodotti integrato (serie, colori, vetri, accessori)
+- **🆕 Visualizzazione profili tecnici DXF**:
+  - Rendering real-time dei disegni tecnici CAD
+  - Parsing automatico file DXF (LINE, ARC, CIRCLE)
+  - Stile cyberpunk con bordi luminosi cyan
+  - Mapping dinamico tra serie profilo e file DXF
+  - Sistema scalabile per aggiungere nuovi profili
+  - Dettagli tecnici: spessore, nome serie, descrizione
+
+---
+
+## 📐 Gestione Profili DXF
+
+### Aggiungere Nuovi Profili Tecnici
+
+Il sistema di visualizzazione profili DXF è completamente **scalabile** e modulare. Per aggiungere nuovi profili:
+
+**1. Posiziona il file DXF**
+```bash
+# Copia il file DXF nella cartella sorgente
+cp NUOVO_PROFILO.DXF AL_profili/
+
+# Copialo nella cartella public
+cp NUOVO_PROFILO.DXF public/profili/
+```
+
+**2. Aggiorna il mapping**
+
+Modifica `lib/profili-config.js`:
+```javascript
+export const PROFILI_MAPPING = {
+  'nuova-serie': {
+    fileName: 'NUOVO_PROFILO.DXF',
+    nome: 'Nome Serie Profilo',
+    descrizione: 'Descrizione tecnica del profilo',
+    spessore: 'XXmm'
+  },
+  // ... altri profili esistenti
+};
+```
+
+**3. Fine!** ✅
+
+Il configuratore caricherà automaticamente il nuovo profilo quando selezioni la serie corrispondente.
+
+### Profili Attualmente Supportati
+
+| Serie | File DXF | Spessore | Descrizione |
+|-------|----------|----------|-------------|
+| Basic | TT61802.DXF | 50mm | Profilo base, prestazioni standard |
+| Comfort | TT61813.DXF | 60mm | Profilo intermedio, isolamento migliorato |
+| Premium | TT61851.DXF | 70mm | Profilo premium, massime prestazioni |
+
+### Requisiti File DXF
+
+- **Formato**: DXF R12 o superiore
+- **Entità supportate**: LINE, ARC, CIRCLE, POLYLINE
+- **Unità**: Millimetri (automatico scaling)
+- **Dimensione consigliata**: < 1MB per file
 
 ---
 

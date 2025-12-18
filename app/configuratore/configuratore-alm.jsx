@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Download, Save, Settings, Ruler, Package, Palette, Lock, Grid, Sun, Wind, Volume2, Info, ArrowLeft } from 'lucide-react';
+import DxfViewer from '@/components/DxfViewer';
+import { getDxfFileForSerie, getProfiloInfo } from '@/lib/profili-config';
 
 const ConfiguratoreALM = () => {
   const [step, setStep] = useState(1);
@@ -1269,7 +1271,37 @@ const ConfiguratoreALM = () => {
                 <span className="summary-value">{tipiVetro[config.vetro].nome}</span>
               </div>
             </div>
-            
+
+            {/* Sezione Profilo Tecnico DXF */}
+            {getDxfFileForSerie(config.serie) && (
+              <div className="summary-section" style={{marginTop: '2rem'}}>
+                <div className="summary-title">Dettaglio Profilo Tecnico</div>
+                <div style={{marginTop: '1rem'}}>
+                  <DxfViewer
+                    fileName={getDxfFileForSerie(config.serie)}
+                    className="h-64"
+                  />
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    background: 'rgba(100, 255, 218, 0.05)',
+                    border: '1px solid rgba(100, 255, 218, 0.2)',
+                    borderRadius: '8px'
+                  }}>
+                    <div style={{fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.5rem'}}>
+                      {getProfiloInfo(config.serie)?.nome}
+                    </div>
+                    <div style={{fontSize: '0.75rem', color: '#64748b'}}>
+                      {getProfiloInfo(config.serie)?.descrizione}
+                    </div>
+                    <div style={{fontSize: '0.9rem', color: '#64ffda', marginTop: '0.5rem', fontWeight: 600}}>
+                      Spessore: {getProfiloInfo(config.serie)?.spessore}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="price-display">
               <div className="price-label">Preventivo Indicativo</div>
               <div className="price-amount">€ {preventivo.toLocaleString()}</div>
