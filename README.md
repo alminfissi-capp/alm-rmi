@@ -183,17 +183,31 @@ alm-rmi/
 
 ### 6. **Configuratore Infissi** 🎨
 - **5 Step di configurazione**:
-  1. Tipo infisso (finestra, porta-finestra, scorrevole, vetrata fissa)
-  2. Dimensioni personalizzate e serie profilo
+  1. **Frame Geometrico** - Selezione forma (rettangolo, triangolo, rombo, zoppa)
+  2. **Misure Parametriche** - Editor per ogni lato e angolo con validazione real-time
   3. Colori RAL e tipo vetro
   4. Prestazioni (isolamento termico, acustico, sicurezza)
   5. Accessori (maniglie, zanzariere, tapparelle)
-- **Anteprima 3D** in tempo reale con SVG
-- **Calcolo preventivo dinamico** al m²
-- **Riepilogo configurazione** completo
+- **🆕 Sistema Frames Geometrici**:
+  - **4 forme MVP**: Rettangolo, Triangolo, Rombo, Zoppa (pentagono)
+  - **Editor parametrico** con controlli per ogni lato (mm) e angolo (gradi)
+  - **Validazione geometrica** in tempo reale:
+    - Somma angoli = (n-2) × 180°
+    - Verifica chiusura poligono (tolleranza 10mm)
+    - Range lati: 300-2500mm, angoli: 0-180°
+  - **Anteprima SVG dinamica** con:
+    - Rendering real-time del poligono
+    - Labels dimensioni sui lati
+    - Labels angoli sui vertici
+    - Auto-scaling e centering
+    - Effetti glow cyberpunk
+  - **Calcolo automatico**: Area (mm² → m²), Perimetro, Coordinate punti
+  - **Sistema scalabile** per aggiungere nuove forme
+- **Calcolo preventivo dinamico** basato su area geometrica reale
+- **Riepilogo configurazione** con metriche geometriche
 - **Tema cyberpunk** con effetti luminosi
 - Database prodotti integrato (serie, colori, vetri, accessori)
-- **🆕 Visualizzazione profili tecnici DXF**:
+- **Visualizzazione profili tecnici DXF**:
   - Rendering real-time dei disegni tecnici CAD
   - Parsing automatico file DXF (LINE, ARC, CIRCLE)
   - Stile cyberpunk con bordi luminosi cyan
@@ -251,6 +265,87 @@ Il configuratore caricherà automaticamente il nuovo profilo quando selezioni la
 - **Entità supportate**: LINE, ARC, CIRCLE, POLYLINE
 - **Unità**: Millimetri (automatico scaling)
 - **Dimensione consigliata**: < 1MB per file
+
+---
+
+## 🔺 Sistema Frames Geometrici
+
+Il configuratore utilizza un **sistema parametrico** per definire forme geometriche personalizzate, sostituendo il precedente approccio Larghezza × Altezza.
+
+### Architettura
+
+**Struttura File**:
+```
+lib/frames/
+├── geometry-utils.js    # Calcoli matematici e validazione
+└── frames-config.js     # Database forme predefinite
+
+components/frames/
+├── FrameSelector.jsx    # Selezione forma (griglia 2×2)
+├── FrameEditor.jsx      # Editor parametrico lati/angoli
+├── FramePreview.jsx     # Anteprima SVG real-time
+└── index.js             # Export componenti
+```
+
+### Forme Disponibili
+
+| Forma | Punti | Lati Default | Angoli | Descrizione |
+|-------|-------|--------------|--------|-------------|
+| **Rettangolo** | 4 | 1200×1400mm | 90° × 4 | Forma standard finestre classiche |
+| **Triangolo** | 3 | 1200mm × 3 | 60° × 3 | Equilatero per sopraluce |
+| **Rombo** | 4 | 1200/1000mm | 70°-110° | Parallelogramma finestre inclinate |
+| **Zoppa** | 5 | 1200/800/850mm | 90°-135° | Pentagono mansarde |
+
+### Calcoli Geometrici
+
+**Coordinate Punti**: Sistema polare → Cartesiano
+```javascript
+calculatePoints(lati, angoli) → [{x, y}, ...]
+```
+
+**Area Poligono**: Formula di Gauss (Shoelace)
+```javascript
+Area = ½ × |Σ(x[i] × y[i+1] - x[i+1] × y[i])|
+```
+
+**Validazione**:
+- ✓ Somma angoli = (n-2) × 180°
+- ✓ Chiusura poligono (distanza finale < 10mm)
+- ✓ Lati: 300-2500mm
+- ✓ Angoli: 0-180°
+
+### Flusso Utente
+
+1. **Step 1**: Seleziona forma geometrica dalla griglia
+2. **Step 2**: Modifica parametri (lati in mm, angoli in gradi)
+3. **Preview**: Rendering SVG dinamico con labels
+4. **Calcolo**: Area e perimetro automatici
+5. **Preventivo**: Prezzo basato su area reale (€/m²)
+
+### Aggiungere Nuove Forme
+
+**1. Aggiungi configurazione** in `lib/frames/frames-config.js`:
+```javascript
+export const FRAMES_DATABASE = {
+  esagono: {
+    id: 'esagono',
+    nome: 'Esagono',
+    descrizione: 'Forma esagonale regolare',
+    punti: 6,
+    lati: [
+      { id: 'lato1', lunghezza: 800, label: 'Lato 1', minimo: 300, massimo: 2500 },
+      // ... altri 5 lati
+    ],
+    angoli: [
+      { id: 'ang1', gradi: 120, label: 'Angolo 1', minimo: 0, massimo: 180 },
+      // ... altri 5 angoli (somma = 720°)
+    ],
+    icon: 'M 50 10 L 90 30 L 90 70 L 50 90 L 10 70 L 10 30 Z'
+  }
+};
+```
+
+**2. Fine!** Il sistema è completamente scalabile. La forma apparirà automaticamente nel selettore.
 
 ---
 

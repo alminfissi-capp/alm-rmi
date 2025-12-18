@@ -4,13 +4,22 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight, Download, Save, Settings, Ruler, Package, Palette, Lock, Grid, Sun, Wind, Volume2, Info, ArrowLeft } from 'lucide-react';
 import DxfViewer from '@/components/DxfViewer';
 import { getDxfFileForSerie, getProfiloInfo } from '@/lib/profili-config';
+import { FrameSelector, FrameEditor, FramePreview } from '@/components/frames';
+import { getFrameConfig, cloneFrameConfig } from '@/lib/frames/frames-config';
+import { mm2ToM2, calculatePoints, calculateArea, calculatePerimeter, isValidPolygon } from '@/lib/frames/geometry-utils';
 
 const ConfiguratoreALM = () => {
   const [step, setStep] = useState(1);
   const [config, setConfig] = useState({
+    // Frame geometrico (nuovo Step 1)
+    frameId: 'rettangolo',
+    frameData: null, // Sarà popolato con lati, angoli, points, area, perimetro
+
+    // Vecchi campi (per compatibilità)
     tipo: 'finestra',
     larghezza: 120,
     altezza: 140,
+
     serie: 'premium',
     colore: 'bianco',
     finitura: 'verniciato',
@@ -30,6 +39,33 @@ const ConfiguratoreALM = () => {
 
   const [preventivo, setPreventivo] = useState(0);
   const [showTooltip, setShowTooltip] = useState(null);
+
+  // Inizializza frameData quando cambia frameId
+  useEffect(() => {
+    const frameConfig = cloneFrameConfig(config.frameId);
+    if (frameConfig) {
+      // Calcola i valori iniziali con la configurazione di default
+      const validation = isValidPolygon(frameConfig.lati, frameConfig.angoli);
+
+      if (validation.valid) {
+        const points = calculatePoints(frameConfig.lati, frameConfig.angoli);
+        const area = calculateArea(points);
+        const perimetro = calculatePerimeter(frameConfig.lati);
+
+        setConfig(prev => ({
+          ...prev,
+          frameData: {
+            lati: frameConfig.lati,
+            angoli: frameConfig.angoli,
+            points,
+            area,
+            perimetro,
+            valid: true
+          }
+        }));
+      }
+    }
+  }, [config.frameId]);
 
   // Database prodotti
   const tipiInfisso = [
@@ -72,29 +108,38 @@ const ConfiguratoreALM = () => {
   // Calcolo preventivo
   useEffect(() => {
     const calcolaPreventivo = () => {
-      const superficie = (config.larghezza * config.altezza) / 10000; // m²
+      // Calcola superficie: usa frameData.area se disponibile, altrimenti fallback a L×H
+      let superficie;
+      if (config.frameData && config.frameData.area && config.frameData.valid) {
+        // Converti da mm² a m²
+        superficie = mm2ToM2(config.frameData.area);
+      } else {
+        // Fallback al vecchio metodo (cm → m²)
+        superficie = (config.larghezza * config.altezza) / 10000;
+      }
+
       let prezzo = serie[config.serie].prezzo * superficie;
-      
+
       // Colore
       prezzo += colori[config.colore].prezzo * superficie;
-      
+
       // Vetro
       prezzo += tipiVetro[config.vetro].prezzo * superficie;
-      
+
       // Prestazioni extra
       if (config.prestazioni.termico) prezzo += 50 * superficie;
       if (config.prestazioni.acustico) prezzo += 45 * superficie;
       if (config.prestazioni.sicurezza) prezzo += 80 * superficie;
-      
+
       // Accessori
       if (config.accessori.zanzariera) prezzo += 120;
       if (config.accessori.tapparella) prezzo += 280;
       if (config.accessori.maniglia === 'premium') prezzo += 45;
       if (config.accessori.maniglia === 'security') prezzo += 85;
-      
+
       setPreventivo(Math.round(prezzo));
     };
-    
+
     calcolaPreventivo();
   }, [config]);
 
@@ -935,8 +980,8 @@ const ConfiguratoreALM = () => {
               >
                 <div className="step-circle">{s}</div>
                 <div className="step-label">
-                  {s === 1 && 'Tipo'}
-                  {s === 2 && 'Dimensioni'}
+                  {s === 1 && 'Frame'}
+                  {s === 2 && 'Misure'}
                   {s === 3 && 'Materiali'}
                   {s === 4 && 'Prestazioni'}
                   {s === 5 && 'Accessori'}
@@ -945,102 +990,26 @@ const ConfiguratoreALM = () => {
             ))}
           </div>
           
-          {/* Step 1: Tipo Infisso */}
+          {/* Step 1: Frame Geometrico */}
           {step === 1 && (
-            <div>
-              <h2 className="section-title">
-                <Package size={28} />
-                Seleziona il Tipo di Infisso
-              </h2>
-              <div className="options-grid">
-                {tipiInfisso.map(tipo => (
-                  <div
-                    key={tipo.id}
-                    className={`option-card ${config.tipo === tipo.id ? 'selected' : ''}`}
-                    onClick={() => updateConfig('tipo', tipo.id)}
-                  >
-                    <div className="option-icon">{tipo.icon}</div>
-                    <div className="option-title">{tipo.nome}</div>
-                    <div className="option-desc">{tipo.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <FrameSelector
+              selectedFrameId={config.frameId}
+              onSelectFrame={(frameId) => updateConfig('frameId', frameId)}
+            />
           )}
           
-          {/* Step 2: Dimensioni */}
-          {step === 2 && (
-            <div>
-              <h2 className="section-title">
-                <Ruler size={28} />
-                Definisci le Dimensioni
-              </h2>
-              <div className="input-group">
-                <div className="input-label">
-                  <Settings size={18} />
-                  Misure Personalizzate
-                </div>
-                <div className="dimension-inputs">
-                  <div className="dimension-input">
-                    <input
-                      type="number"
-                      value={config.larghezza}
-                      onChange={(e) => updateConfig('larghezza', parseInt(e.target.value) || 0)}
-                      min="60"
-                      max="300"
-                    />
-                    <span className="dimension-unit">cm</span>
-                    <div style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem'}}>Larghezza</div>
-                  </div>
-                  <div className="dimension-input">
-                    <input
-                      type="number"
-                      value={config.altezza}
-                      onChange={(e) => updateConfig('altezza', parseInt(e.target.value) || 0)}
-                      min="80"
-                      max="300"
-                    />
-                    <span className="dimension-unit">cm</span>
-                    <div style={{fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem'}}>Altezza</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="input-group">
-                <div className="input-label">
-                  Serie Profilo
-                </div>
-                <select 
-                  className="select-custom"
-                  value={config.serie}
-                  onChange={(e) => updateConfig('serie', e.target.value)}
-                >
-                  {Object.entries(serie).map(([key, val]) => (
-                    <option key={key} value={key}>
-                      {val.nome} - {val.desc} - €{val.prezzo}/m²
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="input-group">
-                <div className="input-label">
-                  Tipo di Apertura
-                </div>
-                <select 
-                  className="select-custom"
-                  value={config.apertura}
-                  onChange={(e) => updateConfig('apertura', e.target.value)}
-                >
-                  {aperture[config.tipo].map(ap => (
-                    <option key={ap} value={ap}>
-                      {ap.charAt(0).toUpperCase() + ap.slice(1).replace('-', ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
+          {/* Step 2: Editor Parametrico Frame */}
+          {step === 2 && (() => {
+            const frameConfig = cloneFrameConfig(config.frameId);
+            if (!frameConfig) return null;
+
+            return (
+              <FrameEditor
+                frameConfig={frameConfig}
+                onChange={(frameData) => updateConfig('frameData', frameData)}
+              />
+            );
+          })()}
           
           {/* Step 3: Materiali */}
           {step === 3 && (
@@ -1241,35 +1210,67 @@ const ConfiguratoreALM = () => {
         <div className="preview-panel">
           <div className="preview-card">
             <h3 className="preview-title">Anteprima 3D</h3>
-            
-            {renderVisualizzazione()}
+
+            {/* Mostra FramePreview se stiamo su step 1-2 e abbiamo frameData valido */}
+            {(step === 1 || step === 2) && config.frameData && config.frameData.valid ? (
+              <FramePreview
+                points={config.frameData.points}
+                lati={config.frameData.lati}
+                angoli={config.frameData.angoli}
+                frameConfig={getFrameConfig(config.frameId)}
+              />
+            ) : (step === 1 || step === 2) ? (
+              <div className="visualization-container">
+                <div style={{textAlign: 'center', color: '#94a3b8'}}>
+                  Seleziona una forma e definisci le misure
+                </div>
+              </div>
+            ) : (
+              renderVisualizzazione()
+            )}
             
             <div className="summary-section">
               <div className="summary-title">Riepilogo Configurazione</div>
+
+              {/* Info Frame Geometrico */}
               <div className="summary-item">
-                <span className="summary-label">Tipo:</span>
-                <span className="summary-value">{tipiInfisso.find(t => t.id === config.tipo)?.nome}</span>
+                <span className="summary-label">Forma:</span>
+                <span className="summary-value">{getFrameConfig(config.frameId)?.nome || 'N/D'}</span>
               </div>
-              <div className="summary-item">
-                <span className="summary-label">Dimensioni:</span>
-                <span className="summary-value">{config.larghezza} × {config.altezza} cm</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Serie:</span>
-                <span className="summary-value">{serie[config.serie].nome}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Colore:</span>
-                <span className="summary-value">{colori[config.colore].nome}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Apertura:</span>
-                <span className="summary-value">{config.apertura.charAt(0).toUpperCase() + config.apertura.slice(1)}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Vetro:</span>
-                <span className="summary-value">{tipiVetro[config.vetro].nome}</span>
-              </div>
+              {config.frameData && config.frameData.valid && (
+                <>
+                  <div className="summary-item">
+                    <span className="summary-label">Area:</span>
+                    <span className="summary-value">{(mm2ToM2(config.frameData.area)).toFixed(2)} m²</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Perimetro:</span>
+                    <span className="summary-value">{Math.round(config.frameData.perimetro)} mm</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Lati:</span>
+                    <span className="summary-value">{config.frameData.lati.length}</span>
+                  </div>
+                </>
+              )}
+
+              {/* Info Prodotto */}
+              {step >= 3 && (
+                <>
+                  <div className="summary-item">
+                    <span className="summary-label">Serie:</span>
+                    <span className="summary-value">{serie[config.serie].nome}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Colore:</span>
+                    <span className="summary-value">{colori[config.colore].nome}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span className="summary-label">Vetro:</span>
+                    <span className="summary-value">{tipiVetro[config.vetro].nome}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Sezione Profilo Tecnico DXF */}
