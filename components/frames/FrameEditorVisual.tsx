@@ -246,7 +246,7 @@ export default function FrameEditorVisual({ frameConfig, onChange }: FrameEditor
           ))}
 
           {/* Label misure (stile PVC Windows Studio) */}
-          {measurePositions.map((pos, index) => {
+          {measurePositions.map((pos: { x: number; y: number; value: any; label: string; isHorizontal: boolean }, index: number) => {
             const isEditing = editingIndex === index && editingType === 'lato';
 
             return (

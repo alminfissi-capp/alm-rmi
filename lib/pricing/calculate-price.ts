@@ -10,8 +10,10 @@
  * - Materiali e opzioni selezionate
  */
 
-import { Decimal } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
+
+type Decimal = Prisma.Decimal;
 
 /**
  * Tipologie di calcolo disponibili
@@ -430,9 +432,9 @@ export async function salvaPreventivoCalcolato(
         frame_id: calcolo.frame.frame_id,
         frame_data: calcolo.frame as any,
         calcolo_dettaglio: calcolo.breakdown as any,
-        subtotale: new Decimal(calcolo.breakdown.subtotale),
-        iva: new Decimal(calcolo.breakdown.iva_importo),
-        totale: new Decimal(calcolo.breakdown.totale),
+        subtotale: new Prisma.Decimal(calcolo.breakdown.subtotale),
+        iva: new Prisma.Decimal(calcolo.breakdown.iva_importo),
+        totale: new Prisma.Decimal(calcolo.breakdown.totale),
         stato: 'bozza',
         note: note,
         valido_fino: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // +30 giorni
