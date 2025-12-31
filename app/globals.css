@@ -3,6 +3,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * CUSTOM BREAKPOINTS TABLET-FIRST
+ * Sistema ottimizzato per uso professionale in cantiere con tablet + pennino
+ *
+ * BREAKPOINTS:
+ * - mobile:  0-767px    (smartphone, uso secondario)
+ * - tablet:  768-1023px (TARGET PRIMARIO - iPad/Android tablet in cantiere)
+ * - desktop: 1024px+    (ufficio, post-elaborazione)
+ *
+ * USAGE:
+ * <div className="grid-cols-1 tablet:grid-cols-2 desktop:grid-cols-4">
+ */
+@custom-variant mobile (@media (max-width: 767px));
+@custom-variant tablet (@media (min-width: 768px) and (max-width: 1023px));
+@custom-variant desktop (@media (min-width: 1024px));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -332,4 +348,14 @@
   }
 }
 
+/* ============================================
+   SCROLLBAR HIDE - Per FrameSelector categorie
+   ============================================ */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
 
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

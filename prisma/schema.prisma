@@ -17,11 +17,11 @@ datasource db {
 // TABELLA RILIEVI (Progetti/Commesse)
 // ============================================
 model Rilievo {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String   @db.Uuid
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
 
   // NUOVO: Relazione con Cliente (nullable per backward compatibility)
-  cliente_id String?  @db.Uuid
+  cliente_id String? @db.Uuid
 
   // Dati progetto/commessa
   cliente     String?
@@ -30,19 +30,20 @@ model Rilievo {
   celltel     String?
   email       String?
   note_header String?
-  commessa    String?  @unique
+  commessa    String?   @unique
 
   // Metadata
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
   // Status workflow
-  status     String   @default("bozza")
+  status String @default("bozza")
 
   // Relations
-  clienteRubrica Cliente? @relation(fields: [cliente_id], references: [id], onDelete: SetNull)
+  clienteRubrica Cliente?       @relation(fields: [cliente_id], references: [id], onDelete: SetNull)
   serramenti     Serramento[]
   pdf            PDFGenerated[]
+  preventivi     Preventivo[]
 
   @@index([user_id])
   @@index([cliente_id])
@@ -57,8 +58,8 @@ model Rilievo {
 // TABELLA SERRAMENTI (Pagine P1, P2, P3...)
 // ============================================
 model Serramento {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rilievo_id  String   @db.Uuid
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rilievo_id  String @db.Uuid
   page_number Int
 
   // DATI TIPOLOGIA
@@ -105,9 +106,9 @@ model Serramento {
   alette_aperture String?
 
   // TRAVERSO/MONTANTE
-  tipo_profilo        String?
-  riferimento_misure  String?
-  misura_traverso     Decimal? @db.Decimal(10, 2)
+  tipo_profilo       String?
+  riferimento_misure String?
+  misura_traverso    Decimal? @db.Decimal(10, 2)
 
   // ZANZARIERE
   zanzariere_tipologia String?  @default("RULLO CASSONETTO 42")
@@ -121,8 +122,8 @@ model Serramento {
   pannelli String?
 
   // ZOCCOLO & FASCIA
-  zoccolo    String?
-  fascia_h   Decimal? @db.Decimal(10, 2)
+  zoccolo     String?
+  fascia_h    Decimal? @db.Decimal(10, 2)
   fascia_tipo String?
 
   // OSCURANTI
@@ -165,27 +166,27 @@ model PDFGenerated {
 // TABELLA CLIENTI (Rubrica)
 // ============================================
 model Cliente {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String   @db.Uuid
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
 
   // Dati base
-  nome               String
-  indirizzo          String?
-  telefono           String?
-  email              String?
+  nome      String
+  indirizzo String?
+  telefono  String?
+  email     String?
 
   // Dati aggiuntivi
-  partita_iva_cf     String?
-  ragione_sociale    String?
-  tipologia          String   @default("privato")
-  note               String?
+  partita_iva_cf  String?
+  ragione_sociale String?
+  tipologia       String  @default("privato")
+  note            String?
 
   // Metadata
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
   // Relations
-  rilievi    Rilievo[]
+  rilievi Rilievo[]
 
   @@index([user_id])
   @@index([nome])
@@ -198,25 +199,193 @@ model Cliente {
 // TABELLA USER_CONSENTS (Consensi GDPR)
 // ============================================
 model UserConsent {
-  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id              String   @db.Uuid
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
 
   // Tipo e stato del consenso
-  consent_type         String   // es: "google_contacts_sync"
-  consent_given        Boolean  @default(false)
-  consent_date         DateTime @db.Timestamptz(6)
+  consent_type  String // es: "google_contacts_sync"
+  consent_given Boolean  @default(false)
+  consent_date  DateTime @db.Timestamptz(6)
 
   // Tracciabilità GDPR
   ip_address           String?
   user_agent           String?
-  consent_text_version String   @default("1.0")
+  consent_text_version String  @default("1.0")
 
   // Metadata
   created_at DateTime @default(now()) @db.Timestamptz(6)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
+  @@unique([user_id, consent_type])
   @@index([user_id])
   @@index([consent_type])
-  @@unique([user_id, consent_type])
   @@map("user_consents")
 }
+
+// ============================================
+// SISTEMA PREZZARIO - CALCOLO PREZZI REAL-TIME
+// ============================================
+
+// ============================================
+// TABELLA PREZZARIO (Listino Principale)
+// ============================================
+model Prezzario {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id String @db.Uuid
+
+  // Identificazione listino
+  nome        String // es: "Listino 2025", "Listino Premium"
+  descrizione String?
+
+  // Validità
+  valido_da DateTime  @db.Date
+  valido_a  DateTime? @db.Date
+  attivo    Boolean   @default(true)
+
+  // Metadata
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  voci         VocePrezzario[]
+  prezzi_frame PrezzoFrame[]
+
+  @@index([user_id])
+  @@index([attivo])
+  @@index([valido_da])
+  @@map("prezzari")
+}
+
+// ============================================
+// TABELLA VOCI PREZZARIO (Materiali/Lavorazioni)
+// ============================================
+model VocePrezzario {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prezzario_id String @db.Uuid
+
+  // Identificazione voce
+  categoria   String // "profilo", "vetro", "ferramenta", "manodopera", "accessorio"
+  codice      String // es: "PROF-ALU-70", "VET-DOP-4-16-4"
+  nome        String // es: "Profilo Alluminio 70mm Premium"
+  descrizione String?
+
+  // Prezzi
+  prezzo       Decimal @db.Decimal(10, 2) // Prezzo unitario
+  unita_misura String  @default("pz") // "pz", "m", "m2", "ml", "kg"
+
+  // Formule di calcolo (opzionali)
+  formula String? // es: "area * prezzo" o "perimetro * prezzo"
+
+  // Specifiche tecniche (JSON)
+  specifiche Json? // Dati tecnici aggiuntivi
+
+  // Metadata
+  attivo     Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  prezzario Prezzario @relation(fields: [prezzario_id], references: [id], onDelete: Cascade)
+
+  @@index([prezzario_id])
+  @@index([categoria])
+  @@index([codice])
+  @@index([attivo])
+  @@map("voci_prezzario")
+}
+
+// ============================================
+// TABELLA PREZZI PER TIPOLOGIA FRAME
+// ============================================
+model PrezzoFrame {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prezzario_id String @db.Uuid
+
+  // Identificazione frame
+  frame_id   String // es: "ante_2_battenti", "scorrevole_2_ante"
+  frame_nome String // Nome visualizzato
+
+  // Prezzi base
+  prezzo_base_mq Decimal @db.Decimal(10, 2) // €/m² area totale
+  prezzo_base_ml Decimal @db.Decimal(10, 2) // €/ml perimetro
+
+  // Manodopera
+  manodopera_mq    Decimal @db.Decimal(10, 2) // €/m² installazione
+  manodopera_fissa Decimal @db.Decimal(10, 2) // € fisso per serramento
+
+  // Moltiplicatori per complessità
+  moltiplicatore_ante     Decimal @default(1.0) @db.Decimal(5, 2) // Moltiplicatore per n° ante
+  moltiplicatore_apertura Decimal @default(1.0) @db.Decimal(5, 2) // Moltiplicatore tipo apertura
+
+  // Note
+  note String?
+
+  // Metadata
+  attivo     Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  prezzario Prezzario @relation(fields: [prezzario_id], references: [id], onDelete: Cascade)
+
+  @@unique([prezzario_id, frame_id])
+  @@index([prezzario_id])
+  @@index([frame_id])
+  @@index([attivo])
+  @@map("prezzi_frame")
+}
+
+// ============================================
+// TABELLA PREVENTIVI (Calcoli Salvati)
+// ============================================
+model Preventivo {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rilievo_id String? @db.Uuid // Opzionale: collegato a un rilievo
+  user_id    String  @db.Uuid
+
+  // Dati preventivo
+  numero  String  @unique // es: "PREV-2025-001"
+  cliente String?
+
+  // Configurazione frame salvata
+  frame_id   String
+  frame_data Json // Geometria completa (lati, angoli, points)
+
+  // Calcolo prezzi (snapshot)
+  calcolo_dettaglio Json // Breakdown completo del calcolo
+
+  // Totali
+  subtotale Decimal @db.Decimal(10, 2)
+  iva       Decimal @db.Decimal(10, 2)
+  totale    Decimal @db.Decimal(10, 2)
+
+  // Sconti
+  sconto_percentuale Decimal? @db.Decimal(5, 2)
+  sconto_importo     Decimal? @db.Decimal(10, 2)
+
+  // Status
+  stato String @default("bozza") // "bozza", "inviato", "accettato", "rifiutato"
+
+  // Validità
+  valido_fino DateTime? @db.Date
+
+  // Note
+  note String?
+
+  // Metadata
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  rilievo Rilievo? @relation(fields: [rilievo_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([rilievo_id])
+  @@index([numero])
+  @@index([stato])
+  @@index([created_at(sort: Desc)])
+  @@map("preventivi")
+}
+
+// Aggiungi relation a Rilievo
+// (Nota: Devi anche aggiungere `preventivi Preventivo[]` al model Rilievo esistente)

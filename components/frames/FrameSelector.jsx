@@ -1,43 +1,54 @@
 'use client';
 
-import React from 'react';
-import { getAllFrames } from '@/lib/frames/frames-config';
+import React, { useState } from 'react';
+import { getAllAnteConfigs, getAllFrames } from '@/lib/frames/frames-config';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
- * Componente per la selezione della forma geometrica
- * Mostra una griglia di card con le forme disponibili
+ * Componente per la selezione della configurazione serramento
+ * NUOVO: Mostra configurazioni ante professionali (1 anta, 2 ante, etc.)
+ * LEGACY: Supporta ancora forme geometriche per compatibilità
  */
-export default function FrameSelector({ selectedFrameId, onSelectFrame }) {
-  const frames = getAllFrames();
+export default function FrameSelector({ selectedFrameId, onSelectFrame, mode = 'ante' }) {
+  // mode: 'ante' = configurazioni ante, 'legacy' = forme geometriche
+  const configs = mode === 'ante' ? getAllAnteConfigs() : getAllFrames();
+  const [currentPage, setCurrentPage] = useState(0);
+  const CONFIGS_PER_PAGE = 4;
+  const totalPages = Math.ceil(configs.length / CONFIGS_PER_PAGE);
+
+  const currentConfigs = configs.slice(
+    currentPage * CONFIGS_PER_PAGE,
+    (currentPage + 1) * CONFIGS_PER_PAGE
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-3">
+      {/* Header Compatto */}
       <div className="text-center">
-        <h2 className="text-3xl font-orbitron font-bold text-cyber-cyan mb-2">
-          Seleziona Forma Geometrica
+        <h2 className="text-lg font-orbitron font-bold text-cyber-cyan">
+          {mode === 'ante' ? 'Configurazione' : 'Frame'}
         </h2>
-        <p className="text-gray-400">
-          Scegli la forma base del tuo serramento
+        <p className="text-xs text-gray-400 mt-1">
+          {mode === 'ante' ? 'Seleziona tipo di serramento' : 'Seleziona forma geometrica'}
         </p>
       </div>
 
-      {/* Griglia forme */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {frames.map((frame) => {
-          const isSelected = selectedFrameId === frame.id;
+      {/* Griglia configurazioni - 2x2 compatto */}
+      <div className="grid grid-cols-2 gap-3">
+        {currentConfigs.map((config) => {
+          const isSelected = selectedFrameId === config.id;
 
           return (
             <button
-              key={frame.id}
-              onClick={() => onSelectFrame(frame.id)}
+              key={config.id}
+              onClick={() => onSelectFrame(config.id)}
               className={`
-                group relative p-6 rounded-lg
+                group relative p-3 rounded-lg
                 border-2 transition-all duration-300
                 backdrop-blur-md
                 ${isSelected
-                  ? 'border-cyber-cyan bg-muted-blue shadow-[0_0_30px_rgba(100,255,218,0.4),0_0_60px_rgba(100,255,218,0.2)]'
-                  : 'border-cyber-cyan/30 bg-muted-blue/50 hover:border-cyber-cyan/60 hover:shadow-[0_0_20px_rgba(100,255,218,0.3)]'
+                  ? 'border-cyber-cyan bg-muted-blue shadow-[0_0_20px_rgba(100,255,218,0.4)]'
+                  : 'border-cyber-cyan/30 bg-muted-blue/50 hover:border-cyber-cyan/60'
                 }
               `}
             >
@@ -51,20 +62,20 @@ export default function FrameSelector({ selectedFrameId, onSelectFrame }) {
                 `}
               />
 
-              {/* Icona SVG */}
-              <div className="flex justify-center mb-4">
+              {/* Icona SVG - RIDOTTA */}
+              <div className="flex justify-center mb-2">
                 <svg
                   viewBox="0 0 100 100"
                   className={`
-                    w-32 h-32 transition-all duration-300
+                    w-16 h-16 transition-all duration-300
                     ${isSelected
-                      ? 'drop-shadow-[0_0_12px_rgba(100,255,218,0.8)]'
-                      : 'drop-shadow-[0_0_6px_rgba(100,255,218,0.4)] group-hover:drop-shadow-[0_0_10px_rgba(100,255,218,0.6)]'
+                      ? 'drop-shadow-[0_0_10px_rgba(100,255,218,0.8)]'
+                      : 'drop-shadow-[0_0_4px_rgba(100,255,218,0.4)] group-hover:drop-shadow-[0_0_8px_rgba(100,255,218,0.6)]'
                     }
                   `}
                 >
                   <path
-                    d={frame.icon}
+                    d={config.icon}
                     fill="none"
                     stroke="#64ffda"
                     strokeWidth={isSelected ? "3" : "2"}
@@ -73,40 +84,29 @@ export default function FrameSelector({ selectedFrameId, onSelectFrame }) {
                 </svg>
               </div>
 
-              {/* Titolo */}
-              <h3 className={`
-                text-xl font-orbitron font-bold mb-2 transition-colors duration-300
-                ${isSelected ? 'text-cyber-cyan' : 'text-white group-hover:text-cyber-cyan'}
-              `}>
-                {frame.nome}
-              </h3>
-
-              {/* Descrizione */}
-              <p className="text-gray-400 text-sm mb-3">
-                {frame.descrizione}
-              </p>
-
-              {/* Info tecnica */}
-              <div className="flex items-center justify-center gap-4 text-xs text-gray-500">
-                <span className="flex items-center gap-1">
-                  <span className="text-cyber-teal">{frame.punti}</span> punti
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <span className="text-cyber-teal">{frame.lati.length}</span> lati
-                </span>
+              {/* Titolo + Categoria */}
+              <div className="space-y-1">
+                <h3 className={`
+                  text-sm font-orbitron font-bold text-center transition-colors duration-300
+                  ${isSelected ? 'text-cyber-cyan' : 'text-white group-hover:text-cyber-cyan'}
+                `}>
+                  {config.nome}
+                </h3>
+                {mode === 'ante' && config.apertura && (
+                  <p className="text-[10px] text-center text-gray-400">
+                    {config.apertura === 'battente' ? '🚪 Battente' : config.apertura === 'scorrevole' ? '↔️ Scorrevole' : ''}
+                  </p>
+                )}
               </div>
 
               {/* Badge selezionato */}
               {isSelected && (
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-2 right-2">
                   <div className="
-                    px-3 py-1 rounded-full text-xs font-bold
+                    w-2 h-2 rounded-full
                     bg-gradient-to-r from-cyber-cyan to-cyber-teal
-                    text-dark-blue
-                    shadow-[0_0_15px_rgba(100,255,218,0.6)]
+                    shadow-[0_0_10px_rgba(100,255,218,0.8)]
                   ">
-                    Selezionata
                   </div>
                 </div>
               )}
@@ -115,18 +115,52 @@ export default function FrameSelector({ selectedFrameId, onSelectFrame }) {
         })}
       </div>
 
-      {/* Info aggiuntive */}
-      {selectedFrameId && (
-        <div className="
-          p-4 rounded-lg border-2 border-cyber-teal/30
-          bg-muted-blue/30 backdrop-blur-md
-          text-center text-sm text-gray-400
-        ">
-          <span className="text-cyber-teal font-semibold">
-            Forma selezionata:
-          </span> {frames.find(f => f.id === selectedFrameId)?.nome}
-          <br />
-          Clicca "Avanti" per definire le misure
+      {/* Controlli paginazione swipe orizzontale */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+            disabled={currentPage === 0}
+            className={`
+              p-2 rounded-lg border transition-all duration-300
+              ${currentPage === 0
+                ? 'border-gray-700 bg-gray-800/30 text-gray-600 cursor-not-allowed'
+                : 'border-cyber-cyan/40 bg-muted-blue/50 text-cyber-cyan hover:border-cyber-cyan hover:shadow-[0_0_15px_rgba(100,255,218,0.3)]'
+              }
+            `}
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          {/* Indicatori pagina */}
+          <div className="flex gap-2">
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <div
+                key={idx}
+                className={`
+                  w-2 h-2 rounded-full transition-all duration-300
+                  ${idx === currentPage
+                    ? 'bg-cyber-cyan shadow-[0_0_10px_rgba(100,255,218,0.8)] w-6'
+                    : 'bg-gray-600'
+                  }
+                `}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+            disabled={currentPage === totalPages - 1}
+            className={`
+              p-2 rounded-lg border transition-all duration-300
+              ${currentPage === totalPages - 1
+                ? 'border-gray-700 bg-gray-800/30 text-gray-600 cursor-not-allowed'
+                : 'border-cyber-cyan/40 bg-muted-blue/50 text-cyber-cyan hover:border-cyber-cyan hover:shadow-[0_0_15px_rgba(100,255,218,0.3)]'
+              }
+            `}
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
       )}
     </div>
