@@ -12,12 +12,6 @@ Sentry.init({
   // Ambiente
   environment: process.env.NODE_ENV,
 
-  // Integrations specifiche per server
-  integrations: [
-    // Traccia query Prisma
-    new Sentry.Integrations.Prisma({ client: undefined }), // Passerai il client dove serve
-  ],
-
   beforeSend(event, hint) {
     // Non inviare eventi in development locale
     if (process.env.NODE_ENV === "development") {
